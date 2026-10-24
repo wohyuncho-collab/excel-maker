@@ -91,7 +91,7 @@ function render(){
     <div class="col-h">
       <input data-act="name" value="${esc(c.name)}" placeholder="기관명 입력 (1행)" enterkeyhint="done">
       <button class="ib" data-act="clear" title="바코드 비우기" aria-label="바코드 비우기">ᐊ</button>
-      <button class="ib" data-act="delcol" title="기관 삭제" aria-label="기관 삭제">🛒</button>
+      <button class="ib" data-act="delcol" title="기관 삭제" aria-label="기관 삭제">🗑</button>
     </div>
     <div class="list">${c.items.length?c.items.map((t,i)=>editing&&editing.id===c.id&&editing.i===i
       ?`<div class="row"><span class="n">${i+2}</span><input data-act="edit" value="${esc(t)}" autofocus></div>`
@@ -204,20 +204,26 @@ function build(){
 const b64=blob=>new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.readAsDataURL(blob)});
 async function share(){
   const f=build();if(!f)return;
+  const T='기관별 목록';let why='';
   try{
     const cap=window.Capacitor&&window.Capacitor.Plugins;
     if(cap&&cap.Filesystem&&cap.Share){            // Capacitor APK
       const r=await cap.Filesystem.writeFile({path:f.name,data:await b64(f.blob),directory:'CACHE'});
-      await cap.Share.share({title:'기관별 목록',url:r.uri});return;
+      await cap.Share.share({title:T,url:r.uri});return;
     }
     if(window.Android&&window.Android.shareFile){   // 직접 만든 WebView 브리지
       window.Android.shareFile(await b64(f.blob),f.name);return;
     }
-    const file=new File([f.blob],f.name,{type:f.blob.type});
-    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:'기관별 목록'});return}
-    if(navigator.share){await navigator.share({title:'기관별 목록',text:tsv()});toast('파일 공유 미지원 → 텍스트로 공유했어요');return}
-  }catch(e){if(e&&e.name==='AbortError')return}
-  save();toast('공유 미지원 → 파일로 저장했어요');
+  }catch(e){if(e&&e.name==='AbortError')return;why=(e&&e.name)||'오류'}
+  const file=new File([f.blob],f.name,{type:f.blob.type});
+  if(navigator.share){
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{await navigator.share({files:[file],title:T});return}catch(e){if(e&&e.name==='AbortError')return;why=(e&&e.name)||'오류'}
+    }else why='파일 공유 미지원';
+    try{await navigator.share({title:T,text:tsv()});toast(`파일 공유가 안 돼 텍스트로 공유했어요 (${why})`);return}
+    catch(e){if(e&&e.name==='AbortError')return;why=(e&&e.name)||'오류'}
+  }else why=window.isSecureContext?'이 브라우저는 공유 기능 없음':'HTTPS 주소가 아님';
+  save();toast(`공유 실패(${why}) → 파일로 저장했어요`);
 }
 async function save(){
   const f=build();if(!f)return;
