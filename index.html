@@ -12,7 +12,8 @@
 body{font-family:Pretendard,-apple-system,"Noto Sans KR","Apple SD Gothic Neo",Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:15px;padding:env(safe-area-inset-top) 0 calc(88px + env(safe-area-inset-bottom))}
 button,input{font:inherit;color:inherit}
 button{border:0;cursor:pointer;background:none}
-header{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px);padding:14px 16px 10px;border-bottom:1px solid var(--line)}
+header{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px);padding:14px 16px 10px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.snd{height:40px;padding:0 12px;border-radius:12px;background:var(--card);border:1px solid var(--line);font-size:13px;font-weight:700;white-space:nowrap}
 header h1{font-size:18px;font-weight:800;letter-spacing:-.02em}
 header p{font-size:12.5px;color:var(--mute);margin-top:3px}
 main{max-width:1100px;margin:0 auto;padding:14px 16px;display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
@@ -22,16 +23,16 @@ main{max-width:1100px;margin:0 auto;padding:14px 16px;display:grid;gap:14px;grid
 .col-h input::placeholder{color:#8a90a8;font-weight:500}
 .ib{width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.18);color:#fff;font-size:17px}
 .ib:active{background:rgba(255,255,255,.32)}
-.meta{padding:2px 16px 4px;font-size:13px;color:var(--mute);text-align:right}.meta b{color:var(--pri);font-size:15px}
+.meta{padding:8px 16px 2px;font-size:13px;color:var(--mute);display:flex;justify-content:space-between;align-items:center}.ul{font-size:12px;font-weight:700;color:var(--mute);padding:6px 10px;border-radius:999px;border:1px solid var(--line)}.ul:active{background:var(--line)}.meta b{color:var(--pri);font-size:15px}
 .list{padding:8px 10px;display:flex;flex-direction:column;gap:6px;max-height:42vh;overflow-y:auto}
 .empty{padding:18px 8px;text-align:center;color:var(--mute);font-size:13px;border:1px dashed var(--line);border-radius:12px}
 .row{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 6px 0 12px;border-radius:12px;background:var(--bg)}
-.row .n{width:22px;font-size:11px;font-weight:700;color:var(--mute)}
+.row .n{width:34px;font-size:11px;font-weight:700;color:var(--mute)}
 .row .t{flex:1;text-align:left;padding:12px 0;word-break:break-all}
 .row .x{width:36px;height:36px;border-radius:50%;color:var(--mute);font-size:18px}
 .row .x:active{background:var(--line);color:var(--red)}
 .row input{flex:1;height:40px;border:2px solid var(--pri);border-radius:10px;padding:0 10px;background:var(--soft)}
-.add{display:flex;gap:8px;padding:6px 10px 12px}
+.add{display:flex;gap:8px;padding:6px 10px 8px}.add input.bad{outline:2px solid var(--red);outline-offset:1px}.row.new{animation:fl .7s}@keyframes fl{from{background:var(--soft);box-shadow:0 0 0 2px var(--pri) inset}to{background:var(--bg)}}
 .add input{flex:1;min-width:0;height:46px;border:1px solid var(--line);border-radius:12px;padding:0 14px;background:var(--card)}
 .add input:focus,.col-h input:focus{outline:2px solid var(--pri);outline-offset:1px}
 .add button{padding:0 18px;border-radius:12px;background:var(--text);color:var(--card);font-weight:700}
@@ -40,7 +41,7 @@ main{max-width:1100px;margin:0 auto;padding:14px 16px;display:grid;gap:14px;grid
 .bar button{flex:1;max-width:200px;height:48px;border-radius:14px;font-weight:700;background:var(--bg);border:1px solid var(--line)}
 .bar .p{background:var(--pri);color:#fff;border-color:var(--pri)}
 .bar .p:active{background:var(--pri-d)}
-.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:20;background:var(--text);color:var(--card);padding:12px 18px;border-radius:999px;font-size:13.5px;font-weight:600;display:none;align-items:center;gap:12px;white-space:nowrap;max-width:92vw}
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:20;background:var(--text);color:var(--card);padding:12px 18px;border-radius:999px;font-size:13.5px;font-weight:600;display:none;align-items:center;gap:12px;max-width:92vw;line-height:1.4}
 .toast.on{display:flex}
 .toast b{color:var(--pri);cursor:pointer;filter:brightness(1.4)}
 .sheet{position:fixed;inset:0;z-index:15;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center}
@@ -58,8 +59,8 @@ th.r{background:var(--soft)}
 </head>
 <body>
 <header>
-  <h1>기관별 엑셀표 생성기 𝄃𝄂𝄂𝄀𝄁𝄃𝄂𝄂𝄃</h1>
-  <p id="sum"></p>
+  <div><h1>기관별 엑셀표 생성기</h1><p id="sum"></p></div>
+  <button id="bSnd" class="snd"></button>
 </header>
 <main id="app"></main>
 <div class="bar">
@@ -72,86 +73,126 @@ th.r{background:var(--soft)}
 <div class="sheet" id="sheet"><div><h2><span>미리보기 (1행 = 기관명)</span></h2><div class="sc" id="pv"></div><button class="close" id="bClose">닫기</button></div></div>
 
 <script>
-const KEY='inst_excel_v2', MAX=12;
-let cols=load(), editing=null, undoSnap=null, focusId=null, tt;
-const $=s=>document.querySelector(s);
+const KEY='inst_excel_v2', SKEY='inst_excel_snd', MAX=12;
+let cols=load(), sets=new Map(), editing=null, undoSnap=null, tt, saveT, tact=null, ac, snd=true;
+try{snd=localStorage.getItem(SKEY)!=='0'}catch(e){}
+const $=s=>document.querySelector(s), app=$('#app');
 const esc=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const sortKo=a=>[...a].sort((x,y)=>x.localeCompare(y,'ko',{numeric:true,sensitivity:'base'}));
+const coll=new Intl.Collator('ko',{numeric:true,sensitivity:'base'});
+const sortKo=a=>[...a].sort(coll.compare);
 function uid(){return 'c'+Date.now()+Math.random().toString(36).slice(2,6)}
 
+/* ---------- 저장 (0.3초 모아서 1번, 앱을 벗어날 때 즉시) ---------- */
 function load(){try{const d=JSON.parse(localStorage.getItem(KEY));if(Array.isArray(d)&&d.length)return d}catch(e){}return [1,2,3].map(()=>({id:uid(),name:'',items:[]}))}
-function persist(){try{localStorage.setItem(KEY,JSON.stringify(cols))}catch(e){}}
-function toast(msg,undo){clearTimeout(tt);$('#tmsg').textContent=msg;$('#tundo').hidden=!undo;$('#toast').classList.add('on');tt=setTimeout(()=>$('#toast').classList.remove('on'),undo?4500:2200)}
-function snap(){undoSnap=JSON.stringify(cols)}
-$('#tundo').onclick=()=>{if(undoSnap){cols=JSON.parse(undoSnap);undoSnap=null;persist();render();toast('되돌렸어요')}};
+function flush(){clearTimeout(saveT);try{localStorage.setItem(KEY,JSON.stringify(cols))}catch(e){}}
+function persist(){clearTimeout(saveT);saveT=setTimeout(flush,300)}
+addEventListener('pagehide',flush);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)flush()});
+const setOf=c=>{let s=sets.get(c.id);if(!s){s=new Set(c.items);sets.set(c.id,s)}return s};
 
-function render(){
-  $('#app').innerHTML=cols.map(c=>`
+/* ---------- 알림 (소리·진동·토스트) ---------- */
+function beep(ok){
+  if(!snd)return;
+  try{
+    ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume();
+    const t=ac.currentTime,seq=ok?[[1400,0,.05]]:[[300,0,.12],[300,.18,.12]];
+    for(const [f,d,l] of seq){const o=ac.createOscillator(),g=ac.createGain();o.type='square';o.frequency.value=f;g.gain.value=.08;o.connect(g);g.connect(ac.destination);o.start(t+d);o.stop(t+d+l)}
+    if(navigator.vibrate)navigator.vibrate(ok?25:[70,50,70]);
+  }catch(e){}
+}
+function updSnd(){$('#bSnd').textContent=snd?'🔔 소리 켬':'🔕 소리 끔'}
+$('#bSnd').onclick=()=>{snd=!snd;try{localStorage.setItem(SKEY,snd?'1':'0')}catch(e){}updSnd();beep(true)};
+function toast(msg,undo,act){clearTimeout(tt);tact=act||null;$('#tmsg').textContent=msg;$('#tundo').textContent=act?act.label:'되돌리기';$('#tundo').hidden=!(undo||act);$('#toast').classList.add('on');tt=setTimeout(()=>$('#toast').classList.remove('on'),act?7000:undo?4500:2200)}
+function snap(){undoSnap=JSON.stringify(cols)}
+$('#tundo').onclick=()=>{
+  if(tact){const f=tact.fn;tact=null;$('#toast').classList.remove('on');f();return}
+  if(undoSnap){cols=JSON.parse(undoSnap);undoSnap=null;sets.clear();persist();renderAll();toast('되돌렸어요')}
+};
+
+/* ---------- 화면 (입력창 → 총 개수 → 목록, 최신 항목이 맨 위) ---------- */
+function rowHTML(i,t,isNew){return `<div class="row${isNew?' new':''}"><span class="n">${i+1}</span><button class="t" data-act="start" data-i="${i}">${esc(t)}</button><button class="x" data-act="del" data-i="${i}" aria-label="삭제">×</button></div>`}
+function editHTML(i,t){return `<div class="row"><span class="n">${i+1}</span><input data-act="edit" value="${esc(t)}"></div>`}
+function listHTML(c){
+  if(!c.items.length)return '<div class="empty">스캔하거나 입력하면 여기에 쌓여요<br>(최신 항목이 맨 위)</div>';
+  let h='';for(let i=c.items.length-1;i>=0;i--)h+=editing&&editing.id===c.id&&editing.i===i?editHTML(i,c.items[i]):rowHTML(i,c.items[i]);
+  return h;
+}
+function colHTML(c){return `
   <section class="col" data-id="${c.id}">
     <div class="col-h">
       <input data-act="name" value="${esc(c.name)}" placeholder="기관명 입력 (1행)" enterkeyhint="done">
-      <button class="ib" data-act="clear" title="바코드 비우기" aria-label="바코드 비우기">ᐊ</button>
-      <button class="ib" data-act="delcol" title="기관 삭제" aria-label="기관 삭제">🗑</button>
+      <button class="ib" data-act="clear" title="항목 비우기" aria-label="항목 비우기">⌫</button>
+      <button class="ib" data-act="delcol" title="열 삭제" aria-label="열 삭제">🗑</button>
     </div>
-    <div class="list">${c.items.length?c.items.map((t,i)=>editing&&editing.id===c.id&&editing.i===i
-      ?`<div class="row"><span class="n">${i+2}</span><input data-act="edit" value="${esc(t)}" autofocus></div>`
-      :`<div class="row"><span class="n">${i+2}</span><button class="t" data-act="start" data-i="${i}">${esc(t)}</button><button class="x" data-act="del" data-i="${i}" aria-label="삭제">×</button></div>`).join('')
-      :'<div class="empty">아래에 입력하세요.</div>'}</div>
-    <div class="meta">총 <b>${c.items.length}</b>개 항목</div>
-    <div class="add"><input data-act="add" placeholder="항목 입력 후 Enter" enterkeyhint="done"><button data-act="addbtn">추가</button></div>
-  </section>`).join('')+'<button class="addcol" data-act="addcol">＋ 기관 열 추가</button>';
-  const total=cols.reduce((a,c)=>a+c.items.length,0);
-  $('#sum').textContent=`${cols.length}개 열 · 총 ${total}개 항목 · 자동 저장됨`;
-  if(focusId){const el=document.querySelector(`[data-id="${focusId}"] [data-act=add]`);el&&el.focus();focusId=null}
-  const ed=document.querySelector('[data-act=edit]');if(ed){ed.focus();ed.select()}
+    <div class="meta"><span>총 <b class="cnt">${c.items.length}</b>개 항목</span><button class="ul" data-act="undolast">마지막 취소</button></div>
+    <div class="add"><input data-act="add" placeholder="스캔 또는 입력 후 Enter" enterkeyhint="done" autocomplete="off" autocapitalize="off" spellcheck="false"><button data-act="addbtn">추가</button></div>
+    <div class="list">${listHTML(c)}</div>
+  </section>`}
+function updateSum(){const t=cols.reduce((a,c)=>a+c.items.length,0);$('#sum').textContent=`${cols.length}개 열 · 총 ${t}개 항목 · 자동 저장됨`}
+function renderAll(){app.innerHTML=cols.map(colHTML).join('')+'<button class="addcol" data-act="addcol">＋ 기관 열 추가</button>';updateSum()}
+function renderCol(id,focusAdd){
+  const c=cols.find(x=>x.id===id),old=app.querySelector(`[data-id="${id}"]`);
+  if(!c||!old)return renderAll();
+  old.outerHTML=colHTML(c);
+  const sec=app.querySelector(`[data-id="${id}"]`),ed=sec.querySelector('[data-act=edit]');
+  if(ed){ed.focus();ed.select()}else if(focusAdd)sec.querySelector('[data-act=add]').focus();
+  updateSum();
 }
+function flashBad(sec){const i=sec.querySelector('[data-act=add]');i.classList.add('bad');setTimeout(()=>i.classList.remove('bad'),500)}
 
-function addItems(id,raw){
+/* ---------- 입력 (1건이면 새 줄 하나만 추가 → 항목이 많아도 빠름) ---------- */
+function addMany(id,raw){
   const c=cols.find(x=>x.id===id);if(!c)return;
-  const list=raw.split(/\r?\n|\t/).map(s=>s.trim()).filter(Boolean);
-  if(!list.length)return;
-  snap();let added=0,dup=0;
-  for(const t of list){if(c.items.includes(t))dup++;else{c.items.push(t);added++}}
-  c.items=sortKo(c.items);persist();focusId=id;render();
-  toast(dup?`${added}개 추가 · 중복 ${dup}개 제외`:`${added}개 추가했어요`,added>0);
+  const list=raw.split(/\r?\n|\t/).map(s=>s.trim()).filter(Boolean);if(!list.length)return;
+  const S=setOf(c);let added=0,dup=0;
+  for(const t of list){if(S.has(t))dup++;else{S.add(t);c.items.push(t);added++}}
+  if(added===1&&list.length===1){
+    const sec=app.querySelector(`[data-id="${id}"]`),lst=sec.querySelector('.list'),i=c.items.length-1;
+    if(lst.firstElementChild&&lst.firstElementChild.classList.contains('empty'))lst.innerHTML='';
+    lst.insertAdjacentHTML('afterbegin',rowHTML(i,c.items[i],true));
+    lst.scrollTop=0;sec.querySelector('.cnt').textContent=c.items.length;updateSum();
+  }else if(added)renderCol(id,true);
+  if(added)persist();
+  if(dup){beep(false);flashBad(app.querySelector(`[data-id="${id}"]`));toast(list.length===1?`이미 있는 항목: ${list[0]}`:`${added}개 추가 · 중복 ${dup}개 제외`)}
+  else if(added){beep(true);if(list.length>1)toast(`${added}개 추가했어요`)}
 }
 
-const app=$('#app');
 app.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');if(!b)return;
-  const sec=b.closest('.col'),id=sec&&sec.dataset.id,c=cols.find(x=>x.id===id),a=b.dataset.act,i=+b.dataset.i;
-  if(a==='addcol'){if(cols.length>=MAX)return toast(`최대 ${MAX}개 열까지 가능해요`);cols.push({id:uid(),name:'',items:[]});persist();render();window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})}
-  else if(a==='delcol'){if(cols.length<=1)return toast('최소 1개 열은 필요해요');snap();cols=cols.filter(x=>x.id!==id);persist();render();toast('열을 삭제했어요',true)}
-  else if(a==='clear'){if(!c.items.length)return;snap();c.items=[];persist();render();toast('항목을 비웠어요',true)}
-  else if(a==='del'){snap();c.items.splice(i,1);persist();render();toast('삭제했어요',true)}
-  else if(a==='start'){editing={id,i};render()}
-  else if(a==='addbtn'){const inp=sec.querySelector('[data-act=add]');addItems(id,inp.value)}
+  const a=b.dataset.act,sec=b.closest('.col'),id=sec&&sec.dataset.id,c=cols.find(x=>x.id===id),i=+b.dataset.i;
+  if(a==='addcol'){if(cols.length>=MAX)return toast(`최대 ${MAX}개 열까지 가능해요`);cols.push({id:uid(),name:'',items:[]});persist();renderAll();window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})}
+  else if(a==='delcol'){if(cols.length<=1)return toast('최소 1개 열은 필요해요');snap();cols=cols.filter(x=>x.id!==id);sets.delete(id);persist();renderAll();toast('열을 삭제했어요',true)}
+  else if(a==='clear'){if(!c.items.length)return;snap();c.items=[];sets.delete(id);persist();renderCol(id);toast('항목을 비웠어요',true)}
+  else if(a==='del'){snap();c.items.splice(i,1);sets.delete(id);persist();renderCol(id);toast('삭제했어요',true)}
+  else if(a==='undolast'){if(!c.items.length)return toast('취소할 항목이 없어요');const t=c.items.pop();setOf(c).delete(t);persist();renderCol(id,true);toast(`취소: ${t}`)}
+  else if(a==='start'){editing={id,i};renderCol(id)}
+  else if(a==='addbtn'){const inp=sec.querySelector('[data-act=add]'),v=inp.value;inp.value='';addMany(id,v);inp.focus()}
 });
 app.addEventListener('input',e=>{if(e.target.dataset.act==='name'){cols.find(x=>x.id===e.target.closest('.col').dataset.id).name=e.target.value;persist()}});
 app.addEventListener('keydown',e=>{
-  const a=e.target.dataset.act,id=e.target.closest('.col')?.dataset.id;
-  if(e.key==='Enter'&&a==='add'){e.preventDefault();addItems(id,e.target.value)}
-  if(a==='edit'){if(e.key==='Enter')e.target.blur();if(e.key==='Escape'){editing=null;render()}}
+  const a=e.target.dataset.act,sec=e.target.closest('.col'),id=sec&&sec.dataset.id;
+  if(e.key==='Enter'&&a==='add'){e.preventDefault();const v=e.target.value;e.target.value='';addMany(id,v)}
+  if(a==='edit'){if(e.key==='Enter')e.target.blur();if(e.key==='Escape'){editing=null;renderCol(id)}}
 });
 app.addEventListener('paste',e=>{
   if(e.target.dataset.act!=='add')return;
   const t=(e.clipboardData||window.clipboardData).getData('text');
-  if(/[\r\n\t]/.test(t.trim())){e.preventDefault();addItems(e.target.closest('.col').dataset.id,t)}
+  if(/[\r\n\t]/.test(t.trim())){e.preventDefault();addMany(e.target.closest('.col').dataset.id,t)}
 });
 app.addEventListener('focusout',e=>{
   if(e.target.dataset.act!=='edit'||!editing)return;
-  const {id,i}=editing,c=cols.find(x=>x.id===id),v=e.target.value.trim();editing=null;
-  if(!v){snap();c.items.splice(i,1);toast('빈 값이라 삭제했어요',true)}
-  else if(c.items.some((t,k)=>k!==i&&t===v))toast('중복이라 수정하지 않았어요');
-  else{snap();c.items[i]=v;c.items=sortKo(c.items)}
-  persist();render();
+  const {id,i}=editing,c=cols.find(x=>x.id===id),old=c.items[i],v=e.target.value.trim(),S=setOf(c);editing=null;
+  if(!v){snap();c.items.splice(i,1);sets.delete(id);toast('빈 값이라 삭제했어요',true)}
+  else if(v!==old&&S.has(v))toast('중복이라 수정하지 않았어요');
+  else if(v!==old){S.delete(old);S.add(v);c.items[i]=v}
+  persist();renderCol(id);
 });
 
 /* ---------- 데이터 → 표 ---------- */
 function table(){
   const heads=cols.map(c=>c.name.trim()||'기관명');
-  const n=Math.max(0,...cols.map(c=>c.items.length)),rows=[];
-  for(let r=0;r<n;r++)rows.push(cols.map(c=>c.items[r]||''));
+  const sorted=cols.map(c=>sortKo(c.items)),n=Math.max(0,...sorted.map(a=>a.length)),rows=[];
+  for(let r=0;r<n;r++)rows.push(sorted.map(a=>a[r]||''));
   return {heads,rows};
 }
 const tsv=()=>{const {heads,rows}=table();return [heads,...rows].map(r=>r.join('\t')).join('\n')};
@@ -202,9 +243,13 @@ function build(){
   return {blob:xlsx(),name:`기관별목록_${stamp()}.xlsx`};
 }
 const b64=blob=>new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.readAsDataURL(blob)});
+async function shareText(){
+  try{await navigator.share({title:'기관별 목록',text:tsv()})}
+  catch(e){if(e&&e.name!=='AbortError')toast(`텍스트 공유도 실패(${e.name}) → "복사"를 이용해 주세요`)}
+}
 async function share(){
   const f=build();if(!f)return;
-  const T='기관별 목록';let why='';
+  const T='기관별 목록';
   try{
     const cap=window.Capacitor&&window.Capacitor.Plugins;
     if(cap&&cap.Filesystem&&cap.Share){            // Capacitor APK
@@ -214,16 +259,19 @@ async function share(){
     if(window.Android&&window.Android.shareFile){   // 직접 만든 WebView 브리지
       window.Android.shareFile(await b64(f.blob),f.name);return;
     }
-  }catch(e){if(e&&e.name==='AbortError')return;why=(e&&e.name)||'오류'}
+  }catch(e){if(!e||e.name!=='AbortError')toast('공유 실패: '+((e&&e.name)||'오류'));return}
+  if(!navigator.share){save();toast(`공유 기능 없음(${window.isSecureContext?'이 브라우저 미지원':'HTTPS 아님'}) → 파일로 저장했어요`);return}
   const file=new File([f.blob],f.name,{type:f.blob.type});
-  if(navigator.share){
-    if(navigator.canShare&&navigator.canShare({files:[file]})){
-      try{await navigator.share({files:[file],title:T});return}catch(e){if(e&&e.name==='AbortError')return;why=(e&&e.name)||'오류'}
-    }else why='파일 공유 미지원';
-    try{await navigator.share({title:T,text:tsv()});toast(`파일 공유가 안 돼 텍스트로 공유했어요 (${why})`);return}
-    catch(e){if(e&&e.name==='AbortError')return;why=(e&&e.name)||'오류'}
-  }else why=window.isSecureContext?'이 브라우저는 공유 기능 없음':'HTTPS 주소가 아님';
-  save();toast(`공유 실패(${why}) → 파일로 저장했어요`);
+  // 사용자 터치 직후 공유는 1번만 시도 (실패 후 재시도하면 NotAllowedError 발생)
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file],title:T})}
+    catch(e){if(e&&e.name==='AbortError')return;
+      toast(`엑셀 파일 공유가 막혔어요(${(e&&e.name)||'오류'})`,false,{label:'텍스트로 공유',fn:shareText})}
+    return;
+  }
+  try{await navigator.share({title:T,text:tsv()});toast('파일 공유가 안 돼 텍스트로 공유했어요')}
+  catch(e){if(e&&e.name==='AbortError')return;
+    toast(`공유가 막혔어요(${(e&&e.name)||'오류'})`,false,{label:'파일로 저장',fn:save})}
 }
 async function save(){
   const f=build();if(!f)return;
@@ -246,7 +294,7 @@ function preview(){
 $('#bShare').onclick=share;$('#bSave').onclick=save;$('#bCopy').onclick=copy;$('#bPrev').onclick=preview;
 $('#bClose').onclick=()=>$('#sheet').classList.remove('on');
 $('#sheet').onclick=e=>{if(e.target.id==='sheet')e.target.classList.remove('on')};
-render();
+renderAll();updSnd();
 </script>
 </body>
 </html>
