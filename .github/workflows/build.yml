@@ -20,16 +20,26 @@ jobs:
       - name: 스캐너 라이브러리를 앱에 포함 (오프라인 동작)
         run: |
           cp node_modules/html5-qrcode/html5-qrcode.min.js www/
-          sed -i 's#https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js#html5-qrcode.min.js#' www/index.html
-          grep -n "html5-qrcode" www/index.html
+          ls -l www
       - run: npx cap add android
       - run: cp -r icons/. android/app/src/main/res/
       - name: 카메라 권한 추가
         run: |
           sed -i 's#<application#<uses-permission android:name="android.permission.CAMERA" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />\n    <application#' android/app/src/main/AndroidManifest.xml
           grep -n "CAMERA" android/app/src/main/AndroidManifest.xml
-      - run: npx cap sync android
-      - run: cd android && chmod +x gradlew && ./gradlew assembleDebug
+      - name: 고속 스캐너(구글 ML Kit) 포함해서 빌드
+        id: full
+        continue-on-error: true
+        run: |
+          npm install @capacitor-mlkit/barcode-scanning@6
+          npx cap sync android
+          cd android && chmod +x gradlew && ./gradlew assembleDebug
+      - name: 실패하면 기본 스캐너만으로 다시 빌드
+        if: steps.full.outcome == 'failure'
+        run: |
+          npm uninstall @capacitor-mlkit/barcode-scanning
+          npx cap sync android
+          cd android && chmod +x gradlew && ./gradlew clean assembleDebug
       - uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk
