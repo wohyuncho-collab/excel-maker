@@ -16,8 +16,18 @@ jobs:
           distribution: temurin
           java-version: 17
       - run: npm install
+      - run: npm install html5-qrcode@2.3.8 --no-save
+      - name: 스캐너 라이브러리를 앱에 포함 (오프라인 동작)
+        run: |
+          cp node_modules/html5-qrcode/html5-qrcode.min.js www/
+          sed -i 's#https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js#html5-qrcode.min.js#' www/index.html
+          grep -n "html5-qrcode" www/index.html
       - run: npx cap add android
       - run: cp -r icons/. android/app/src/main/res/
+      - name: 카메라 권한 추가
+        run: |
+          sed -i 's#<application#<uses-permission android:name="android.permission.CAMERA" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />\n    <application#' android/app/src/main/AndroidManifest.xml
+          grep -n "CAMERA" android/app/src/main/AndroidManifest.xml
       - run: npx cap sync android
       - run: cd android && chmod +x gradlew && ./gradlew assembleDebug
       - uses: actions/upload-artifact@v4
