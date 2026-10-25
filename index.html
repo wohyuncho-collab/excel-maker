@@ -329,23 +329,18 @@ function openWebScan(colId){
   document.getElementById('scanTitle').textContent = (col&&col.name?col.name:'선택 열') + ' - 바코드 스캔';
   document.getElementById('scanSheet').classList.add('on');
   document.getElementById('scanStatus').textContent = '카메라 시작 중...';
-    loadScanner().then(camCheck).then(()=>{
-    const F=window.Html5QrcodeSupportedFormats;
-    let formats;
-    if(F){
-      // D26-178xx는 CODE_128이므로 우선순위: CODE_128, CODE_39, 그 외 전체
-      formats = [F.CODE_128, F.CODE_39, F.CODE_93, F.EAN_13, F.EAN_8, F.QR_CODE].filter(Boolean);
-      if(!formats.length) formats = Object.values(F);
-    }
+  loadScanner().then(camCheck).then(()=>{
+    const F=window.Html5QrcodeSupportedFormats||{};
+    const formats=['QR_CODE','CODE_93','CODE_128','CODE_39','EAN_13','EAN_8','UPC_A','UPC_E','ITF','CODABAR','DATA_MATRIX'].map(k=>F[k]).filter(x=>x!==undefined);
     html5Qr = new Html5Qrcode('reader',{
-      formatsToSupport:formats,
-      experimentalFeatures:{useBarCodeDetectorIfSupported:true},
+      formatsToSupport:formats,                              // 흔한 형식만 → 인식 빠르고 정확
+      experimentalFeatures:{useBarCodeDetectorIfSupported:true}, // 기기 내장 인식기가 있으면 우선 사용
       verbose:false
     });
     return html5Qr.start(
       { facingMode: 'environment' },
       {
-        fps: 20, // D26 바코드용 고속
+        fps: 15,
         // 막대 바코드는 가로로 넓은 영역이 필요 → 화면 폭의 90% × 높이의 45%
         qrbox: (w,h)=>({width:Math.floor(w*0.9),height:Math.floor(Math.min(h*0.45,w*0.5))}),
         // 해상도를 높여야 얇은 막대도 읽힘 (기본값은 낮은 해상도)
@@ -356,7 +351,7 @@ function openWebScan(colId){
     );
   }).then(()=>{
     try{html5Qr.applyVideoConstraints({advanced:[{focusMode:'continuous'}]}).catch(()=>{})}catch(e){}
-    document.getElementById('scanStatus').textContent = 'D26-178xx 바코드를 가로로 10~15cm에서 비춰주세요 (연속 스캔 - 문자 포함 지원)';
+    document.getElementById('scanStatus').textContent = '바코드를 가로로 맞추고 10~20cm 거리에서 비춰 주세요 (연속 스캔)';
   }).catch(e=>{
     document.getElementById('scanStatus').textContent = camMsg(e);
   });
