@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#3A5BFF">
+<title>기관별 엑셀표 생성기</title>
+<style>
+:root{--bg:#F4F6FB;--card:#fff;--line:#E3E7F1;--text:#141926;--mute:#6B728E;--pri:#3A5BFF;--pri-d:#2A43C5;--soft:#EBEFFF;--red:#E5484D;color-scheme:light}
+@media(prefers-color-scheme:dark){:root{--bg:#0E1018;--card:#181B29;--line:#2A2F45;--text:#F2F3F8;--mute:#9AA0BB;--pri:#6B84FF;--pri-d:#4F66E8;--soft:#252A45;--red:#FF6B70;color-scheme:dark}}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+body{font-family:Pretendard,-apple-system,"Noto Sans KR","Apple SD Gothic Neo",Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:15px;padding:env(safe-area-inset-top) 0 calc(88px + env(safe-area-inset-bottom))}
+button,input{font:inherit;color:inherit}
+button{border:0;cursor:pointer;background:none}
+header{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px);padding:14px 16px 10px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.snd{height:40px;padding:0 12px;border-radius:12px;background:var(--card);border:1px solid var(--line);font-size:13px;font-weight:700;white-space:nowrap}
+header h1{font-size:18px;font-weight:800;letter-spacing:-.02em}
+header p{font-size:12.5px;color:var(--mute);margin-top:3px}
+main{max-width:1100px;margin:0 auto;padding:14px 16px;display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+.col{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;display:flex;flex-direction:column}
+.col-h{background:var(--pri);padding:10px;display:flex;gap:6px;align-items:center}
+.col-h input{flex:1;min-width:0;height:42px;border:0;border-radius:12px;padding:0 12px;font-weight:700;background:#fff;color:#141926}
+.col-h input::placeholder{color:#8a90a8;font-weight:500}
+.ib{width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.18);color:#fff;font-size:17px}
+.ib:active{background:rgba(255,255,255,.32)}
+.meta{padding:8px 16px 2px;font-size:13px;color:var(--mute);display:flex;justify-content:space-between;align-items:center}.ul{font-size:12px;font-weight:700;color:var(--mute);padding:6px 10px;border-radius:999px;border:1px solid var(--line)}.ul:active{background:var(--line)}.meta b{color:var(--pri);font-size:15px}
+.list{padding:8px 10px;display:flex;flex-direction:column;gap:6px;max-height:42vh;overflow-y:auto}
+.empty{padding:18px 8px;text-align:center;color:var(--mute);font-size:13px;border:1px dashed var(--line);border-radius:12px}
+.row{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 6px 0 12px;border-radius:12px;background:var(--bg)}
+.row .n{width:34px;font-size:11px;font-weight:700;color:var(--mute)}
+.row .t{flex:1;text-align:left;padding:12px 0;word-break:break-all}
+.row .x{width:36px;height:36px;border-radius:50%;color:var(--mute);font-size:18px}
+.row .x:active{background:var(--line);color:var(--red)}
+.row input{flex:1;height:40px;border:2px solid var(--pri);border-radius:10px;padding:0 10px;background:var(--soft)}
+.add{display:flex;gap:8px;padding:6px 10px 8px}.add input.bad{outline:2px solid var(--red);outline-offset:1px}.row.new{animation:fl .7s}@keyframes fl{from{background:var(--soft);box-shadow:0 0 0 2px var(--pri) inset}to{background:var(--bg)}}
+.add input{flex:1;min-width:0;height:46px;border:1px solid var(--line);border-radius:12px;padding:0 14px;background:var(--card)}
+.add input:focus,.col-h input:focus{outline:2px solid var(--pri);outline-offset:1px}
+.add button{padding:0 18px;border-radius:12px;background:var(--text);color:var(--card);font-weight:700}
+.addcol{min-height:64px;border:2px dashed var(--line);border-radius:18px;color:var(--mute);font-weight:700}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--card);border-top:1px solid var(--line);padding:10px 12px calc(10px + env(safe-area-inset-bottom));display:flex;gap:8px;justify-content:center}
+.bar button{flex:1;max-width:200px;height:48px;border-radius:14px;font-weight:700;background:var(--bg);border:1px solid var(--line)}
+.bar .p{background:var(--pri);color:#fff;border-color:var(--pri)}
+.bar .p:active{background:var(--pri-d)}
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:20;background:var(--text);color:var(--card);padding:12px 18px;border-radius:999px;font-size:13.5px;font-weight:600;display:none;align-items:center;gap:12px;max-width:92vw;line-height:1.4}
+.toast.on{display:flex}
+.toast b{color:var(--pri);cursor:pointer;filter:brightness(1.4)}
+.sheet{position:fixed;inset:0;z-index:15;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center}
+.sheet.on{display:flex}
+.sheet>div{background:var(--card);width:100%;max-width:900px;max-height:82vh;border-radius:20px 20px 0 0;display:flex;flex-direction:column}
+.sheet h2{font-size:16px;padding:16px 18px 8px;display:flex;justify-content:space-between}
+.sheet .sc{overflow:auto;padding:0 12px 12px}
+table{border-collapse:collapse;font-size:13px;min-width:100%}
+th,td{border:1px solid var(--line);padding:7px 10px;white-space:nowrap;text-align:center}
+th{background:var(--pri);color:#fff}
+td.r,th.r{background:var(--soft);color:var(--mute);text-align:center;font-size:11px;width:34px}
+th.r{background:var(--soft)}
+.sheet .close{padding:12px;margin:0 12px calc(12px + env(safe-area-inset-bottom));border-radius:12px;background:var(--bg);font-weight:700}
+.scanSheet>div{max-height:92vh}
+#reader{width:100%;background:#000;border-radius:12px;overflow:hidden}
+#reader video{width:100%!important}
+.scan-hint{padding:10px 14px;font-size:12px;color:var(--mute);text-align:center}
+
+/* 네이티브(ML Kit) 스캐너: 카메라 화면이 웹뷰 뒤에 깔리므로 배경을 투명하게 */
+html.scan{color-scheme:normal!important;background:transparent!important}
+body.barcode-scanner-active{visibility:hidden;background:transparent!important}
+#nScan{display:none;position:fixed;inset:0;z-index:50;flex-direction:column;justify-content:space-between;visibility:hidden}
+body.barcode-scanner-active #nScan{display:flex;visibility:visible}
+body.barcode-scanner-active #nScan *{visibility:visible}
+.nTop,.nBot{background:rgba(0,0,0,.62);color:#fff;padding:12px 14px}
+.nTop{padding-top:calc(12px + env(safe-area-inset-top));display:flex;justify-content:space-between;align-items:center;font-weight:700}
+.nBot{padding-bottom:calc(14px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px}
+#nStatus{font-size:14px;min-height:20px;word-break:break-all}
+.nBtns{display:flex;gap:8px}
+.nBtns button,#nClose{height:44px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.2);color:#fff;font-weight:700}
+.nBtns button{flex:1}
+.nMid{flex:1;display:flex;align-items:center;justify-content:center}
+.nBox{position:relative;width:88%;height:34%;border:2px solid rgba(255,255,255,.9);border-radius:14px}
+.nBox::after{content:"";position:absolute;left:6%;right:6%;top:50%;height:2px;background:#ff3b30}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>기관별 엑셀표 생성기</h1><p id="sum"></p></div>
+  <button id="bSnd" class="snd"></button>
+</header>
+<main id="app"></main>
+<div class="bar">
+  <button id="bPrev">미리보기</button>
+  <button id="bCopy">복사</button>
+  <button id="bSave">저장</button>
+  <button id="bShare" class="p">공유</button>
+</div>
+<div class="toast" id="toast"><span id="tmsg"></span><b id="tundo" hidden>되돌리기</b></div>
+<div class="sheet" id="sheet"><div><h2><span>미리보기 (1행 = 기관명)</span></h2><div class="sc" id="pv"></div><button class="close" id="bClose">닫기</button></div></div>
+<div class="sheet scanSheet" id="scanSheet"><div><h2 style="display:flex;justify-content:space-between;align-items:center;padding:16px 18px 8px"><span id="scanTitle">바코드 스캔</span><button id="bCloseScan" style="padding:6px 12px;border-radius:8px;background:var(--bg);font-weight:700">닫기</button></h2><div id="reader"></div><div class="scan-hint" id="scanStatus">바코드를 카메라에 가져가면 자동으로 입력됩니다 · 연속 스캔 가능</div></div></div>
+
+<div id="nScan"><div class="nTop"><span id="nTitle"></span><button id="nClose">✕ 닫기</button></div><div class="nMid"><div class="nBox"></div></div><div class="nBot"><div id="nStatus"></div><div class="nBtns"><button id="nTorch">🔦 조명</button><button data-z="1">1x</button><button data-z="2">2x</button><button data-z="3">3x</button></div></div></div>
+<script>addEventListener("error",function(e){var d=document.createElement("div");d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99;background:#E5484D;color:#fff;padding:8px 12px;font-size:12px";d.textContent="오류: "+e.message+" (줄 "+(e.lineno||"?")+")";document.body.appendChild(d)})</script>
+<script>
+const KEY='inst_excel_v2', SKEY='inst_excel_snd', MAX=12;
+let cols=load(), sets=new Map(), editing=null, undoSnap=null, tt, saveT, tact=null, ac, snd=true;
+try{snd=localStorage.getItem(SKEY)!=='0'}catch(e){}
+const $=s=>document.querySelector(s), app=$('#app');
+const esc=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const coll=new Intl.Collator('ko',{numeric:true,sensitivity:'base'});
+const sortKo=a=>[...a].sort(coll.compare);
+function uid(){return 'c'+Date.now()+Math.random().toString(36).slice(2,6)}
+
+/* ---------- 저장 (0.3초 모아서 1번, 앱을 벗어날 때 즉시) ---------- */
+function load(){try{const d=JSON.parse(localStorage.getItem(KEY));if(Array.isArray(d)&&d.length)return d}catch(e){}return [1,2,3].map(()=>({id:uid(),name:'',items:[]}))}
+function flush(){clearTimeout(saveT);try{localStorage.setItem(KEY,JSON.stringify(cols))}catch(e){}}
+function persist(){clearTimeout(saveT);saveT=setTimeout(flush,300)}
+addEventListener('pagehide',flush);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)flush()});
+const setOf=c=>{let s=sets.get(c.id);if(!s){s=new Set(c.items);sets.set(c.id,s)}return s};
+
+/* ---------- 알림 (소리·진동·토스트) ---------- */
+function beep(ok){
+  if(!snd)return;
+  try{
+    ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume();
+    const t=ac.currentTime,seq=ok?[[1400,0,.05]]:[[300,0,.12],[300,.18,.12]];
+    for(const [f,d,l] of seq){const o=ac.createOscillator(),g=ac.createGain();o.type='square';o.frequency.value=f;g.gain.value=.08;o.connect(g);g.connect(ac.destination);o.start(t+d);o.stop(t+d+l)}
+    if(navigator.vibrate)navigator.vibrate(ok?25:[70,50,70]);
+  }catch(e){}
+}
+function updSnd(){$('#bSnd').textContent=snd?'🔔 소리 켬':'🔕 소리 끔'}
+$('#bSnd').onclick=()=>{snd=!snd;try{localStorage.setItem(SKEY,snd?'1':'0')}catch(e){}updSnd();beep(true)};
+function toast(msg,undo,act){clearTimeout(tt);tact=act||null;$('#tmsg').textContent=msg;$('#tundo').textContent=act?act.label:'되돌리기';$('#tundo').hidden=!(undo||act);$('#toast').classList.add('on');tt=setTimeout(()=>$('#toast').classList.remove('on'),act?7000:undo?4500:2200)}
+function snap(){undoSnap=JSON.stringify(cols)}
+$('#tundo').onclick=()=>{
+  if(tact){const f=tact.fn;tact=null;$('#toast').classList.remove('on');f();return}
+  if(undoSnap){cols=JSON.parse(undoSnap);undoSnap=null;sets.clear();persist();renderAll();toast('되돌렸어요')}
+};
+
+/* ---------- 화면 (입력창 → 총 개수 → 목록, 최신 항목이 맨 위) ---------- */
+function rowHTML(i,t,isNew){return `<div class="row${isNew?' new':''}"><span class="n">${i+1}</span><button class="t" data-act="start" data-i="${i}">${esc(t)}</button><button class="x" data-act="del" data-i="${i}" aria-label="삭제">×</button></div>`}
+function editHTML(i,t){return `<div class="row"><span class="n">${i+1}</span><input data-act="edit" value="${esc(t)}"></div>`}
+function listHTML(c){
+  if(!c.items.length)return '<div class="empty">스캔하거나 입력하면 여기에 쌓여요<br>(최신 항목이 맨 위)</div>';
+  let h='';for(let i=c.items.length-1;i>=0;i--)h+=editing&&editing.id===c.id&&editing.i===i?editHTML(i,c.items[i]):rowHTML(i,c.items[i]);
+  return h;
+}
+function colHTML(c){return `
+  <section class="col" data-id="${c.id}">
+    <div class="col-h">
+      <input data-act="name" value="${esc(c.name)}" placeholder="기관명 입력 (1행)" enterkeyhint="done">
+      <button class="ib" data-act="scan" title="바코드 스캔" aria-label="바코드 스캔">📷</button>
+      <button class="ib" data-act="clear" title="항목 비우기" aria-label="항목 비우기">⌫</button>
+      <button class="ib" data-act="delcol" title="열 삭제" aria-label="열 삭제">🗑</button>
+    </div>
+    <div class="meta"><span>총 <b class="cnt">${c.items.length}</b>개 항목</span><button class="ul" data-act="undolast">마지막 취소</button></div>
+    <div class="add"><input data-act="add" placeholder="스캔 또는 입력 후 Enter" enterkeyhint="done" autocomplete="off" autocapitalize="off" spellcheck="false"><button data-act="addbtn">추가</button></div>
+    <div class="list">${listHTML(c)}</div>
+  </section>`}
+function updateSum(){const t=cols.reduce((a,c)=>a+c.items.length,0);$('#sum').textContent=`${cols.length}개 열 · 총 ${t}개 항목 · 자동 저장됨`}
+function renderAll(){app.innerHTML=cols.map(colHTML).join('')+'<button class="addcol" data-act="addcol">＋ 기관 열 추가</button>';updateSum()}
+function renderCol(id,focusAdd){
+  const c=cols.find(x=>x.id===id),old=app.querySelector(`[data-id="${id}"]`);
+  if(!c||!old)return renderAll();
+  old.outerHTML=colHTML(c);
+  const sec=app.querySelector(`[data-id="${id}"]`),ed=sec.querySelector('[data-act=edit]');
+  if(ed){ed.focus();ed.select()}else if(focusAdd)sec.querySelector('[data-act=add]').focus();
+  updateSum();
+}
+function flashBad(sec){const i=sec.querySelector('[data-act=add]');i.classList.add('bad');setTimeout(()=>i.classList.remove('bad'),500)}
+
+/* ---------- 입력 (1건이면 새 줄 하나만 추가 → 항목이 많아도 빠름) ---------- */
+function addMany(id,raw){
+  const c=cols.find(x=>x.id===id);if(!c)return;
+  const list=raw.split(/\r?\n|\t/).map(s=>s.trim()).filter(Boolean);if(!list.length)return;
+  const S=setOf(c);let added=0,dup=0;
+  for(const t of list){if(S.has(t))dup++;else{S.add(t);c.items.push(t);added++}}
+  if(added===1&&list.length===1){
+    const sec=app.querySelector(`[data-id="${id}"]`),lst=sec.querySelector('.list'),i=c.items.length-1;
+    if(lst.firstElementChild&&lst.firstElementChild.classList.contains('empty'))lst.innerHTML='';
+    lst.insertAdjacentHTML('afterbegin',rowHTML(i,c.items[i],true));
+    lst.scrollTop=0;sec.querySelector('.cnt').textContent=c.items.length;updateSum();
+  }else if(added)renderCol(id,true);
+  if(added)persist();
+  if(dup){beep(false);flashBad(app.querySelector(`[data-id="${id}"]`));toast(list.length===1?`이미 있는 항목: ${list[0]}`:`${added}개 추가 · 중복 ${dup}개 제외`)}
+  else if(added){beep(true);if(list.length>1)toast(`${added}개 추가했어요`)}
+}
+
+app.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const a=b.dataset.act,sec=b.closest('.col'),id=sec&&sec.dataset.id,c=cols.find(x=>x.id===id),i=+b.dataset.i;
+  if(a==='addcol'){if(cols.length>=MAX)return toast(`최대 ${MAX}개 열까지 가능해요`);cols.push({id:uid(),name:'',items:[]});persist();renderAll();window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})}
+  else if(a==='scan'){ openScan(id); }
+  else if(a==='delcol'){if(cols.length<=1)return toast('최소 1개 열은 필요해요');snap();cols=cols.filter(x=>x.id!==id);sets.delete(id);persist();renderAll();toast('열을 삭제했어요',true)}
+  else if(a==='clear'){if(!c.items.length)return;snap();c.items=[];sets.delete(id);persist();renderCol(id);toast('항목을 비웠어요',true)}
+  else if(a==='del'){snap();c.items.splice(i,1);sets.delete(id);persist();renderCol(id);toast('삭제했어요',true)}
+  else if(a==='undolast'){if(!c.items.length)return toast('취소할 항목이 없어요');const t=c.items.pop();setOf(c).delete(t);persist();renderCol(id,true);toast(`취소: ${t}`)}
+  else if(a==='start'){editing={id,i};renderCol(id)}
+  else if(a==='addbtn'){const inp=sec.querySelector('[data-act=add]'),v=inp.value;inp.value='';addMany(id,v);inp.focus()}
+});
+app.addEventListener('input',e=>{if(e.target.dataset.act==='name'){cols.find(x=>x.id===e.target.closest('.col').dataset.id).name=e.target.value;persist()}});
+app.addEventListener('keydown',e=>{
+  const a=e.target.dataset.act,sec=e.target.closest('.col'),id=sec&&sec.dataset.id;
+  if(e.key==='Enter'&&a==='add'){e.preventDefault();const v=e.target.value;e.target.value='';addMany(id,v)}
+  if(a==='edit'){if(e.key==='Enter')e.target.blur();if(e.key==='Escape'){editing=null;renderCol(id)}}
+});
+app.addEventListener('paste',e=>{
+  if(e.target.dataset.act!=='add')return;
+  const t=(e.clipboardData||window.clipboardData).getData('text');
+  if(/[\r\n\t]/.test(t.trim())){e.preventDefault();addMany(e.target.closest('.col').dataset.id,t)}
+});
+app.addEventListener('focusout',e=>{
+  if(e.target.dataset.act!=='edit'||!editing)return;
+  const {id,i}=editing,c=cols.find(x=>x.id===id),old=c.items[i],v=e.target.value.trim(),S=setOf(c);editing=null;
+  if(!v){snap();c.items.splice(i,1);sets.delete(id);toast('빈 값이라 삭제했어요',true)}
+  else if(v!==old&&S.has(v))toast('중복이라 수정하지 않았어요');
+  else if(v!==old){S.delete(old);S.add(v);c.items[i]=v}
+  persist();renderCol(id);
+});
+
+/* ---------- 데이터 → 표 ---------- */
+function table(){
+  const heads=cols.map(c=>c.name.trim()||'기관명');
+  const sorted=cols.map(c=>sortKo(c.items)),n=Math.max(0,...sorted.map(a=>a.length)),rows=[];
+  for(let r=0;r<n;r++)rows.push(sorted.map(a=>a[r]||''));
+  return {heads,rows};
+}
+const tsv=()=>{const {heads,rows}=table();return [heads,...rows].map(r=>r.join('\t')).join('\n')};
+const stamp=()=>new Date().toISOString().slice(0,10);
+
+/* ---------- 순수 JS xlsx 생성 (라이브러리 불필요, WebView 호환) ---------- */
+const crcT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c}return t})();
+const crc=b=>{let c=-1;for(const x of b)c=crcT[(c^x)&255]^(c>>>8);return(c^-1)>>>0};
+function zip(files){
+  const enc=new TextEncoder(),parts=[],cen=[];let off=0;
+  for(const [name,txt] of Object.entries(files)){
+    const nb=enc.encode(name),d=enc.encode(txt),c=crc(d);
+    const h=new DataView(new ArrayBuffer(30));
+    h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint16(12,0x21,true);
+    h.setUint32(14,c,true);h.setUint32(18,d.length,true);h.setUint32(22,d.length,true);h.setUint16(26,nb.length,true);
+    parts.push(new Uint8Array(h.buffer),nb,d);
+    const g=new DataView(new ArrayBuffer(46));
+    g.setUint32(0,0x02014b50,true);g.setUint16(4,20,true);g.setUint16(6,20,true);g.setUint16(8,0x0800,true);g.setUint16(14,0x21,true);
+    g.setUint32(16,c,true);g.setUint32(20,d.length,true);g.setUint32(24,d.length,true);g.setUint16(28,nb.length,true);g.setUint32(42,off,true);
+    cen.push(new Uint8Array(g.buffer),nb);
+    off+=30+nb.length+d.length;
+  }
+  const n=Object.keys(files).length,cs=cen.reduce((a,b)=>a+b.length,0),e=new DataView(new ArrayBuffer(22));
+  e.setUint32(0,0x06054b50,true);e.setUint16(8,n,true);e.setUint16(10,n,true);e.setUint32(12,cs,true);e.setUint32(16,off,true);
+  return new Blob([...parts,...cen,new Uint8Array(e.buffer)],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+function xlsx(){
+  const {heads,rows}=table(),X=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const L=i=>String.fromCharCode(65+i);
+  const cell=(v,r,i,s)=>v===''?'':`<c r="${L(i)}${r}" t="inlineStr"${s?` s="${s}"`:''}><is><t>${X(v)}</t></is></c>`;
+  const width=heads.map((h,i)=>{const m=Math.max(h.length*1.3,...cols[i].items.map(t=>t.length));return Math.min(50,Math.max(12,m+4))});
+  const sheet=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>${width.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('')}</cols><sheetData><row r="1">${heads.map((h,i)=>cell(h,1,i,1)).join('')}</row>${rows.map((r,k)=>`<row r="${k+2}">${r.map((v,i)=>cell(v,k+2,i,2)).join('')}</row>`).join('')}</sheetData></worksheet>`;
+  const H='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+  return zip({
+    '[Content_Types].xml':H+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>',
+    '_rels/.rels':H+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>',
+    'xl/workbook.xml':H+'<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="기관별 목록" sheetId="1" r:id="rId1"/></sheets></workbook>',
+    'xl/_rels/workbook.xml.rels':H+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>',
+    'xl/styles.xml':H+'<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Malgun Gothic"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Malgun Gothic"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF3A5BFF"/></patternFill></fill></fills><borders count="3"><border/><border><left style="thin"><color rgb="FF9AA0BB"/></left><right style="thin"><color rgb="FF9AA0BB"/></right><top style="thin"><color rgb="FF9AA0BB"/></top><bottom style="thin"><color rgb="FF9AA0BB"/></bottom></border><border><left style="medium"><color rgb="FF1F2A66"/></left><right style="medium"><color rgb="FF1F2A66"/></right><top style="medium"><color rgb="FF1F2A66"/></top><bottom style="medium"><color rgb="FF1F2A66"/></bottom></border></borders><cellStyleXfs count="1"><xf/></cellStyleXfs><cellXfs count="3"><xf/><xf fontId="1" fillId="2" borderId="2" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf borderId="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf></cellXfs></styleSheet>',
+    'xl/worksheets/sheet1.xml':sheet
+  });
+}
+
+/* ---------- 내보내기 (브라우저 / PWA / Capacitor / 커스텀 WebView 브리지) ---------- */
+function build(){
+  const {heads,rows}=table();
+  if(!rows.length&&heads.every(h=>h==='기관명')){toast('내보낼 데이터가 없어요');return null}
+  return {blob:xlsx(),name:`기관별목록_${stamp()}.xlsx`};
+}
+const b64=blob=>new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.readAsDataURL(blob)});
+async function shareText(){
+  try{await navigator.share({title:'기관별 목록',text:tsv()})}
+  catch(e){if(e&&e.name!=='AbortError')toast(`텍스트 공유도 실패(${e.name}) → "복사"를 이용해 주세요`)}
+}
+async function share(){
+  const f=build();if(!f)return;
+  const T='기관별 목록';
+  try{
+    const cap=window.Capacitor&&window.Capacitor.Plugins;
+    if(cap&&cap.Filesystem&&cap.Share){            // Capacitor APK
+      const r=await cap.Filesystem.writeFile({path:f.name,data:await b64(f.blob),directory:'CACHE'});
+      await cap.Share.share({title:T,url:r.uri});return;
+    }
+    if(window.Android&&window.Android.shareFile){   // 직접 만든 WebView 브리지
+      window.Android.shareFile(await b64(f.blob),f.name);return;
+    }
+  }catch(e){if(!e||e.name!=='AbortError')toast('공유 실패: '+((e&&e.name)||'오류'));return}
+  if(!navigator.share){save();toast(`공유 기능 없음(${window.isSecureContext?'이 브라우저 미지원':'HTTPS 아님'}) → 파일로 저장했어요`);return}
+  const file=new File([f.blob],f.name,{type:f.blob.type});
+  // 사용자 터치 직후 공유는 1번만 시도 (실패 후 재시도하면 NotAllowedError 발생)
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file],title:T})}
+    catch(e){if(e&&e.name==='AbortError')return;
+      toast(`엑셀 파일 공유가 막혔어요(${(e&&e.name)||'오류'})`,false,{label:'텍스트로 공유',fn:shareText})}
+    return;
+  }
+  try{await navigator.share({title:T,text:tsv()});toast('파일 공유가 안 돼 텍스트로 공유했어요')}
+  catch(e){if(e&&e.name==='AbortError')return;
+    toast(`공유가 막혔어요(${(e&&e.name)||'오류'})`,false,{label:'파일로 저장',fn:save})}
+}
+async function save(){
+  const f=build();if(!f)return;
+  if(window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Share)return share();
+  if(window.Android&&window.Android.saveFile){window.Android.saveFile(await b64(f.blob),f.name);return}
+  const u=URL.createObjectURL(f.blob),a=document.createElement('a');
+  a.href=u;a.download=f.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),3000);
+  toast('엑셀 파일을 저장했어요');
+}
+async function copy(){
+  const {rows}=table();if(!rows.length)return toast('복사할 데이터가 없어요');
+  try{await navigator.clipboard.writeText(tsv())}catch(e){const t=document.createElement('textarea');t.value=tsv();document.body.appendChild(t);t.select();document.execCommand('copy');t.remove()}
+  toast('표를 복사했어요 (엑셀·메신저에 붙여넣기)');
+}
+function preview(){
+  const {heads,rows}=table();
+  $('#pv').innerHTML=`<table><thead><tr><th class="r">1</th>${heads.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map((r,k)=>`<tr><td class="r">${k+2}</td>${r.map(v=>`<td>${esc(v)||'&nbsp;'}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${heads.length+1}" style="text-align:center;color:var(--mute)">항목이 없어요</td></tr>`}</tbody></table>`;
+  $('#sheet').classList.add('on');
+}
+$('#bShare').onclick=share;$('#bSave').onclick=save;$('#bCopy').onclick=copy;$('#bPrev').onclick=preview;
+$('#bClose').onclick=()=>$('#sheet').classList.remove('on');
+$('#sheet').onclick=e=>{if(e.target.id==='sheet')e.target.classList.remove('on')};
+
+/* ---------- 바코드 스캔 (연속 스캔) ---------- */
+let html5Qr = null, scanColId = null, lastScanned = '', lastTime = 0;
+function openWebScan(colId){
+  scanColId = colId;
+  const col = cols.find(x=>x.id===colId);
+  document.getElementById('scanTitle').textContent = (col&&col.name?col.name:'선택 열') + ' - 바코드 스캔';
+  document.getElementById('scanSheet').classList.add('on');
+  document.getElementById('scanStatus').textContent = '카메라 시작 중...';
+    loadScanner().then(camCheck).then(()=>{
+    // [문자 포함 바코드 진짜 지원] 브라우저 내장 인식기 끄고 ZXing 엔진으로 강제 - CODE_128 문자+기호 완전 지원
+    const F=window.Html5QrcodeSupportedFormats;
+    let formats;
+    if(F){
+      formats = [F.CODE_128, F.CODE_39, F.CODE_93, F.CODABAR, F.EAN_13, F.EAN_8, F.QR_CODE, F.DATA_MATRIX].filter(Boolean);
+      if(!formats.length) formats = Object.values(F);
+    }
+    html5Qr = new Html5Qrcode('reader',{
+      formatsToSupport:formats,
+      experimentalFeatures:{useBarCodeDetectorIfSupported:false}, // 중요: false로 해야 D26-, 6RI7H0- 같은 문자 바코드 인식됨
+      verbose:false
+    });
+    return html5Qr.start(
+      { facingMode: 'environment' },
+      {
+        fps: 15,
+        // 막대 바코드는 가로로 넓은 영역이 필요 → 화면 폭의 90% × 높이의 45%
+        qrbox: (w,h)=>({width:Math.floor(w*0.9),height:Math.floor(Math.min(h*0.45,w*0.5))}),
+        // 해상도를 높여야 얇은 막대도 읽힘 (기본값은 낮은 해상도)
+        videoConstraints:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}}
+      },
+      onScanSuccess,
+      ()=>{}
+    );
+  }).then(()=>{
+    try{html5Qr.applyVideoConstraints({advanced:[{focusMode:'continuous'}]}).catch(()=>{})}catch(e){}
+    document.getElementById('scanStatus').textContent = '바코드를 가로로 맞추고 10~20cm 거리에서 비춰 주세요 (연속 스캔)';
+  }).catch(e=>{
+    document.getElementById('scanStatus').textContent = camMsg(e);
+  });
+}
+/* 카메라 권한을 먼저 직접 요청 → 권한 창이 확실히 뜨고, 실패 원인도 정확히 구분됨 */
+async function camCheck(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw {name:'NoMediaDevices'};
+  const st=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}});
+  st.getTracks().forEach(t=>t.stop());
+}
+function camMsg(e){
+  const t=(e&&(e.name||e.message))||String(e);
+  let m;
+  if(/LibLoad/.test(t))m='스캐너 라이브러리를 불러오지 못했어요 (인터넷 연결 확인)';
+  else if(/NoMediaDevices/.test(t))m='이 환경은 카메라를 지원하지 않아요 (HTTPS 주소나 앱에서 열어 주세요)';
+  else if(/NotAllowed|Permission|Security/i.test(t))m='카메라 권한이 거부됐어요. 폰 설정 → 앱 → 이 앱 → 권한 → 카메라를 허용해 주세요';
+  else if(/NotFound|Requested device|No camera/i.test(t))m='사용할 카메라를 찾지 못했어요';
+  else if(/NotReadable|in use/i.test(t))m='다른 앱이 카메라를 쓰는 중이에요. 닫고 다시 시도해 주세요';
+  else m='카메라를 시작하지 못했어요';
+  return m+'  [세부: '+t+']';
+}
+/* 스캐너 라이브러리는 📷를 처음 누를 때만 불러옴 → 초기 화면 표시가 막히지 않음 (앱 내장본 우선, 없으면 CDN) */
+function loadScanner(){
+  if(window.Html5Qrcode)return Promise.resolve();
+  const srcs=['html5-qrcode.min.js','https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js'];
+  return srcs.reduce((p,src)=>p.catch(()=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=()=>window.Html5Qrcode?res():rej();s.onerror=rej;document.head.appendChild(s)})),Promise.reject()).catch(()=>{throw {name:'LibLoad'}});
+}
+function closeScan(){
+  if(nativeOn){closeNative();return}
+  document.getElementById('scanSheet').classList.remove('on');
+  if(html5Qr){
+    html5Qr.stop().then(()=>{ html5Qr.clear(); html5Qr=null; }).catch(()=>{ html5Qr=null; });
+  }
+}
+function onScanSuccess(decodedText){
+  const now = Date.now(), same = decodedText === lastScanned, gap = now - lastTime;
+  lastTime = now;                       // 화면에 보이는 동안 계속 갱신 → 같은 바코드가 계속 비쳐도 중복 처리 안 함
+  if(same && gap < 1500) return;
+  lastScanned = decodedText;
+  const c = cols.find(x=>x.id===scanColId);
+  if(!c) return;
+  const dup = setOf(c).has(decodedText);
+  addMany(scanColId, decodedText);      // 입력 순서 유지 · 새 줄만 추가 · 소리/진동/저장 처리
+  const msg = (dup?`중복됨: ${decodedText}`:`추가됨: ${decodedText}`) + ` · 총 ${c.items.length}개`;
+  document.getElementById('scanStatus').textContent = msg;
+  const n = document.getElementById('nStatus'); if(n) n.textContent = msg;
+}
+/* ===== 네이티브(구글 ML Kit) 스캐너: APK에서만 사용, 실패하면 일반 카메라로 자동 전환 ===== */
+const NS=()=>window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.BarcodeScanner;
+let nativeOn=false,nativeHandle=null;
+function openScan(colId){
+  const B=NS();
+  if(!B)return openWebScan(colId);
+  openNative(colId,B).catch(()=>{closeNative().finally(()=>{toast('고속 스캐너를 못 켜서 일반 카메라로 전환해요');openWebScan(colId)})});
+}
+async function openNative(colId,B){
+  scanColId=colId;
+  const col=cols.find(x=>x.id===colId);
+  document.getElementById('nTitle').textContent=(col&&col.name?col.name:'선택 열')+' - 스캔';
+  document.getElementById('nStatus').textContent='바코드를 비추세요 (연속 스캔)';
+  const p=await B.requestPermissions();
+  if(p.camera!=='granted')throw new Error('권한');
+  document.documentElement.classList.add('scan');
+  document.body.classList.add('barcode-scanner-active');
+  nativeOn=true;
+  nativeHandle=await B.addListener('barcodesScanned',ev=>{
+    for(const b of (ev.barcodes||[])){const v=String(b.rawValue||b.displayValue||'').trim();if(v)onScanSuccess(v)}
+  });
+  await B.startScan();
+}
+async function closeNative(){
+  const B=NS();
+  nativeOn=false;
+  document.body.classList.remove('barcode-scanner-active');
+  document.documentElement.classList.remove('scan');
+  try{if(nativeHandle)await nativeHandle.remove()}catch(e){}
+  nativeHandle=null;
+  try{if(B)await B.stopScan()}catch(e){}
+}
+document.getElementById('nClose').onclick=closeScan;
+document.getElementById('nTorch').onclick=async()=>{try{await NS().toggleTorch()}catch(e){toast('이 기기는 조명을 지원하지 않아요')}};
+document.querySelectorAll('#nScan [data-z]').forEach(b=>b.onclick=async()=>{try{await NS().setZoomRatio({zoomRatio:+b.dataset.z})}catch(e){}});
+document.getElementById('bCloseScan').onclick = closeScan;
+document.getElementById('scanSheet').addEventListener('click', e=>{ if(e.target.id==='scanSheet') closeScan(); });
+
+/* 기존 renderAll 이후 */
+
+renderAll();updSnd();
+</script>
+</body>
+</html>
