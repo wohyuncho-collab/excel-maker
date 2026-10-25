@@ -74,7 +74,7 @@ body.barcode-scanner-active #nScan *{visibility:visible}
 .nBtns button,#nClose{height:44px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.2);color:#fff;font-weight:700}
 .nBtns button{flex:1}
 .nMid{flex:1;display:flex;align-items:center;justify-content:center}
-.nBox{position:relative;width:88%;height:34%;border:2px solid rgba(255,255,255,.9);border-radius:14px}
+.nBox{position:relative;width:95%;height:34%;border:2px solid rgba(255,255,255,.9);border-radius:14px}
 .nBox::after{content:"";position:absolute;left:6%;right:6%;top:50%;height:2px;background:#ff3b30}
 </style>
 </head>
@@ -153,7 +153,8 @@ function colHTML(c){return `
     <div class="add"><input data-act="add" placeholder="스캔 또는 입력 후 Enter" enterkeyhint="done" autocomplete="off" autocapitalize="off" spellcheck="false"><button data-act="addbtn">추가</button></div>
     <div class="list">${listHTML(c)}</div>
   </section>`}
-function updateSum(){const t=cols.reduce((a,c)=>a+c.items.length,0);$('#sum').textContent=`${cols.length}개 열 · 총 ${t}개 항목 · 자동 저장됨`}
+const VER='v6';
+function updateSum(){const t=cols.reduce((a,c)=>a+c.items.length,0);$('#sum').textContent=`${cols.length}개 열 · 총 ${t}개 항목 · 자동 저장됨 · ${VER}`}
 function renderAll(){app.innerHTML=cols.map(colHTML).join('')+'<button class="addcol" data-act="addcol">＋ 기관 열 추가</button>';updateSum()}
 function renderCol(id,focusAdd){
   const c=cols.find(x=>x.id===id),old=app.querySelector(`[data-id="${id}"]`);
@@ -166,6 +167,7 @@ function renderCol(id,focusAdd){
 function flashBad(sec){const i=sec.querySelector('[data-act=add]');i.classList.add('bad');setTimeout(()=>i.classList.remove('bad'),500)}
 
 /* ---------- 입력 (1건이면 새 줄 하나만 추가 → 항목이 많아도 빠름) ---------- */
+let lastDupBeep=0;
 function addMany(id,raw){
   const c=cols.find(x=>x.id===id);if(!c)return;
   const list=raw.split(/\r?\n|\t/).map(s=>s.trim()).filter(Boolean);if(!list.length)return;
@@ -178,7 +180,7 @@ function addMany(id,raw){
     lst.scrollTop=0;sec.querySelector('.cnt').textContent=c.items.length;updateSum();
   }else if(added)renderCol(id,true);
   if(added)persist();
-  if(dup){beep(false);flashBad(app.querySelector(`[data-id="${id}"]`));toast(list.length===1?`이미 있는 항목: ${list[0]}`:`${added}개 추가 · 중복 ${dup}개 제외`)}
+  if(dup){const tn=Date.now();if(tn-lastDupBeep>800){lastDupBeep=tn;beep(false)}flashBad(app.querySelector(`[data-id="${id}"]`));toast(list.length===1?`이미 있는 항목: ${list[0]}`:`${added}개 추가 · 중복 ${dup}개 제외`)}
   else if(added){beep(true);if(list.length>1)toast(`${added}개 추가했어요`)}
 }
 
@@ -323,23 +325,21 @@ $('#sheet').onclick=e=>{if(e.target.id==='sheet')e.target.classList.remove('on')
 
 /* ---------- 바코드 스캔 (연속 스캔) ---------- */
 let html5Qr = null, scanColId = null, lastScanned = '', lastTime = 0;
+let frames=0;
 function openWebScan(colId){
-  scanColId = colId;
+  frames=0;
+  if(!document.getElementById('scanFrames'))document.getElementById('scanStatus').insertAdjacentHTML('afterend','<div id="scanFrames" style="font-size:11px;color:var(--mute);padding:2px 0"></div>');
+  scanColId = colId; seen.clear();
   const col = cols.find(x=>x.id===colId);
-  document.getElementById('scanTitle').textContent = (col&&col.name?col.name:'선택 열') + ' - 바코드 스캔';
+  document.getElementById('scanTitle').textContent = (col&&col.name?col.name:'선택 열') + ' - 바코드 스캔 [일반 카메라]';
   document.getElementById('scanSheet').classList.add('on');
   document.getElementById('scanStatus').textContent = '카메라 시작 중...';
-    loadScanner().then(camCheck).then(()=>{
-    // [문자 포함 바코드 진짜 지원] 브라우저 내장 인식기 끄고 ZXing 엔진으로 강제 - CODE_128 문자+기호 완전 지원
-    const F=window.Html5QrcodeSupportedFormats;
-    let formats;
-    if(F){
-      formats = [F.CODE_128, F.CODE_39, F.CODE_93, F.CODABAR, F.EAN_13, F.EAN_8, F.QR_CODE, F.DATA_MATRIX].filter(Boolean);
-      if(!formats.length) formats = Object.values(F);
-    }
+  loadScanner().then(camCheck).then(()=>{
+    const F=window.Html5QrcodeSupportedFormats||{};
+    const formats=['QR_CODE','CODE_93','CODE_128','CODE_39','EAN_13','EAN_8','UPC_A','UPC_E','ITF','CODABAR','DATA_MATRIX'].map(k=>F[k]).filter(x=>x!==undefined);
     html5Qr = new Html5Qrcode('reader',{
-      formatsToSupport:formats,
-      experimentalFeatures:{useBarCodeDetectorIfSupported:false}, // 중요: false로 해야 D26-, 6RI7H0- 같은 문자 바코드 인식됨
+      formatsToSupport:formats,                              // 흔한 형식만 → 인식 빠르고 정확
+      experimentalFeatures:{useBarCodeDetectorIfSupported:true}, // 기기 내장 인식기가 있으면 우선 사용
       verbose:false
     });
     return html5Qr.start(
@@ -347,12 +347,12 @@ function openWebScan(colId){
       {
         fps: 15,
         // 막대 바코드는 가로로 넓은 영역이 필요 → 화면 폭의 90% × 높이의 45%
-        qrbox: (w,h)=>({width:Math.floor(w*0.9),height:Math.floor(Math.min(h*0.45,w*0.5))}),
+        qrbox: (w,h)=>({width:Math.floor(w*0.95),height:Math.floor(Math.min(h*0.6,w*0.7))}),
         // 해상도를 높여야 얇은 막대도 읽힘 (기본값은 낮은 해상도)
         videoConstraints:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}}
       },
       onScanSuccess,
-      ()=>{}
+      ()=>{frames++;if(frames%10===0){const f=document.getElementById('scanFrames');if(f)f.textContent='해독 시도 '+frames+'회 (숫자가 오르면 카메라는 정상 동작 중)'}}
     );
   }).then(()=>{
     try{html5Qr.applyVideoConstraints({advanced:[{focusMode:'continuous'}]}).catch(()=>{})}catch(e){}
@@ -391,11 +391,14 @@ function closeScan(){
     html5Qr.stop().then(()=>{ html5Qr.clear(); html5Qr=null; }).catch(()=>{ html5Qr=null; });
   }
 }
+const seen = new Map();
 function onScanSuccess(decodedText){
-  const now = Date.now(), same = decodedText === lastScanned, gap = now - lastTime;
-  lastTime = now;                       // 화면에 보이는 동안 계속 갱신 → 같은 바코드가 계속 비쳐도 중복 처리 안 함
-  if(same && gap < 1500) return;
-  lastScanned = decodedText;
+  // 바코드마다 '마지막으로 보인 시각'을 따로 기억 → 여러 바코드가 한 화면에 있어도,
+  // 같은 바코드가 계속 보이는 동안은 다시 처리하지 않음 (화면에서 1.5초 벗어났다 돌아와야 새로 인식)
+  const now = Date.now(), prev = seen.get(decodedText);
+  seen.set(decodedText, now);
+  if(seen.size > 300){ for(const [k,t] of seen) if(now - t > 5000) seen.delete(k); }
+  if(prev && now - prev < 1500) return;
   const c = cols.find(x=>x.id===scanColId);
   if(!c) return;
   const dup = setOf(c).has(decodedText);
@@ -413,9 +416,9 @@ function openScan(colId){
   openNative(colId,B).catch(()=>{closeNative().finally(()=>{toast('고속 스캐너를 못 켜서 일반 카메라로 전환해요');openWebScan(colId)})});
 }
 async function openNative(colId,B){
-  scanColId=colId;
+  scanColId=colId; seen.clear();
   const col=cols.find(x=>x.id===colId);
-  document.getElementById('nTitle').textContent=(col&&col.name?col.name:'선택 열')+' - 스캔';
+  document.getElementById('nTitle').textContent=(col&&col.name?col.name:'선택 열')+' - 스캔 [고속 스캐너]';
   document.getElementById('nStatus').textContent='바코드를 비추세요 (연속 스캔)';
   const p=await B.requestPermissions();
   if(p.camera!=='granted')throw new Error('권한');
