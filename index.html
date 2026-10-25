@@ -74,7 +74,7 @@ body.barcode-scanner-active #nScan *{visibility:visible}
 .nBtns button,#nClose{height:44px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.2);color:#fff;font-weight:700}
 .nBtns button{flex:1}
 .nMid{flex:1;display:flex;align-items:center;justify-content:center}
-.nBox{position:relative;width:88%;height:34%;border:2px solid rgba(255,255,255,.9);border-radius:14px}
+.nBox{position:relative;width:95%;height:34%;border:2px solid rgba(255,255,255,.9);border-radius:14px}
 .nBox::after{content:"";position:absolute;left:6%;right:6%;top:50%;height:2px;background:#ff3b30}
 </style>
 </head>
@@ -153,7 +153,8 @@ function colHTML(c){return `
     <div class="add"><input data-act="add" placeholder="스캔 또는 입력 후 Enter" enterkeyhint="done" autocomplete="off" autocapitalize="off" spellcheck="false"><button data-act="addbtn">추가</button></div>
     <div class="list">${listHTML(c)}</div>
   </section>`}
-function updateSum(){const t=cols.reduce((a,c)=>a+c.items.length,0);$('#sum').textContent=`${cols.length}개 열 · 총 ${t}개 항목 · 자동 저장됨`}
+const VER='v5 (95%영역·Code93)';
+function updateSum(){const t=cols.reduce((a,c)=>a+c.items.length,0);$('#sum').textContent=`${cols.length}개 열 · 총 ${t}개 항목 · 자동 저장됨 · ${VER}`}
 function renderAll(){app.innerHTML=cols.map(colHTML).join('')+'<button class="addcol" data-act="addcol">＋ 기관 열 추가</button>';updateSum()}
 function renderCol(id,focusAdd){
   const c=cols.find(x=>x.id===id),old=app.querySelector(`[data-id="${id}"]`);
@@ -323,10 +324,13 @@ $('#sheet').onclick=e=>{if(e.target.id==='sheet')e.target.classList.remove('on')
 
 /* ---------- 바코드 스캔 (연속 스캔) ---------- */
 let html5Qr = null, scanColId = null, lastScanned = '', lastTime = 0;
+let frames=0;
 function openWebScan(colId){
+  frames=0;
+  if(!document.getElementById('scanFrames'))document.getElementById('scanStatus').insertAdjacentHTML('afterend','<div id="scanFrames" style="font-size:11px;color:var(--mute);padding:2px 0"></div>');
   scanColId = colId;
   const col = cols.find(x=>x.id===colId);
-  document.getElementById('scanTitle').textContent = (col&&col.name?col.name:'선택 열') + ' - 바코드 스캔';
+  document.getElementById('scanTitle').textContent = (col&&col.name?col.name:'선택 열') + ' - 바코드 스캔 [일반 카메라]';
   document.getElementById('scanSheet').classList.add('on');
   document.getElementById('scanStatus').textContent = '카메라 시작 중...';
   loadScanner().then(camCheck).then(()=>{
@@ -342,12 +346,12 @@ function openWebScan(colId){
       {
         fps: 15,
         // 막대 바코드는 가로로 넓은 영역이 필요 → 화면 폭의 90% × 높이의 45%
-        qrbox: (w,h)=>({width:Math.floor(w*0.9),height:Math.floor(Math.min(h*0.45,w*0.5))}),
+        qrbox: (w,h)=>({width:Math.floor(w*0.95),height:Math.floor(Math.min(h*0.6,w*0.7))}),
         // 해상도를 높여야 얇은 막대도 읽힘 (기본값은 낮은 해상도)
         videoConstraints:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}}
       },
       onScanSuccess,
-      ()=>{}
+      ()=>{frames++;if(frames%10===0){const f=document.getElementById('scanFrames');if(f)f.textContent='해독 시도 '+frames+'회 (숫자가 오르면 카메라는 정상 동작 중)'}}
     );
   }).then(()=>{
     try{html5Qr.applyVideoConstraints({advanced:[{focusMode:'continuous'}]}).catch(()=>{})}catch(e){}
@@ -410,7 +414,7 @@ function openScan(colId){
 async function openNative(colId,B){
   scanColId=colId;
   const col=cols.find(x=>x.id===colId);
-  document.getElementById('nTitle').textContent=(col&&col.name?col.name:'선택 열')+' - 스캔';
+  document.getElementById('nTitle').textContent=(col&&col.name?col.name:'선택 열')+' - 스캔 [고속 스캐너]';
   document.getElementById('nStatus').textContent='바코드를 비추세요 (연속 스캔)';
   const p=await B.requestPermissions();
   if(p.camera!=='granted')throw new Error('권한');
