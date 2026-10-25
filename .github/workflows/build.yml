@@ -8,39 +8,83 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
-      - run: npm install
-      - run: npm install html5-qrcode@2.3.8 --no-save
-      - name: 스캐너 라이브러리를 앱에 포함 (오프라인 동작)
+
+      - name: Setup project
         run: |
-          cp node_modules/html5-qrcode/html5-qrcode.min.js www/
-          ls -l www
-      - run: npx cap add android
-      - run: cp -r icons/. android/app/src/main/res/
-      - name: 카메라 권한 추가
+          if [ ! -f package.json ]; then
+            echo '{"name":"excel-maker","version":"1.0.0","type":"module"}' > package.json
+          fi
+          if [ ! -f capacitor.config.json ]; then
+            echo '{ "appId": "com.example.excelmaker", "appName": "ExcelMaker", "webDir": "www", "bundledWebRuntime": false }' > capacitor.config.json
+          fi
+          mkdir -p www
+          cp index.html www/index.html
+          npm install @capacitor/core @capacitor/cli @capacitor/android --save
+          npm install html5-qrcode@2.3.8 --no-save
+
+      - name: Include scanner lib for offline
         run: |
-          sed -i 's#<application#<uses-permission android:name="android.permission.CAMERA" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />\n    <application#' android/app/src/main/AndroidManifest.xml
-          grep -n "CAMERA" android/app/src/main/AndroidManifest.xml
-      - name: 고속 스캐너(구글 ML Kit) 포함해서 빌드
+          cp node_modules/html5-qrcode/html5-qrcode.min.js www/ || true
+          ls -l www/
+
+      - name: Add Android platform (if not exists)
+        run: |
+          if [ ! -d android ]; then
+            npx cap add android
+          else
+            echo "android already exists, sync only"
+          fi
+          npx cap sync android || true
+
+      - name: Add icons if exists
+        run: |
+          if [ -d icons ]; then
+            cp -r icons/. android/app/src/main/res/ || true
+          else
+            echo "no icons folder, skip"
+          fi
+
+      - name: Add CAMERA permission (idempotent)
+        run: |
+          FILE=android/app/src/main/AndroidManifest.xml
+          if ! grep -q "android.permission.CAMERA" "$FILE"; then
+            sed -i 's#<application#<uses-permission android:name="android.permission.CAMERA" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />\n    <application#' "$FILE"
+            echo "permission added"
+          else
+            echo "CAMERA permission already exists"
+          fi
+          grep -n "CAMERA" "$FILE" || true
+
+      - name: Try build with ML Kit (fast scanner)
         id: full
         continue-on-error: true
         run: |
-          npm install @capacitor-mlkit/barcode-scanning@6
+          npm install @capacitor-mlkit/barcode-scanning@6 --no-save || true
           npx cap sync android
-          cd android && chmod +x gradlew && ./gradlew assembleDebug
-      - name: 실패하면 기본 스캐너만으로 다시 빌드
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --stacktrace
+
+      - name: Fallback build with default scanner
         if: steps.full.outcome == 'failure'
         run: |
-          npm uninstall @capacitor-mlkit/barcode-scanning
+          npm uninstall @capacitor-mlkit/barcode-scanning || true
           npx cap sync android
-          cd android && chmod +x gradlew && ./gradlew clean assembleDebug
-      - uses: actions/upload-artifact@v4
+          cd android
+          chmod +x gradlew
+          ./gradlew clean assembleDebug --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
         with:
-          name: barcode_cam-apk
-          path: android/app/build/outputs/apk/debug/barcode_cam.apk
+          name: app-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
