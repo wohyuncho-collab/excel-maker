@@ -55,6 +55,10 @@ th{background:var(--pri);color:#fff}
 td.r,th.r{background:var(--soft);color:var(--mute);text-align:center;font-size:11px;width:34px}
 th.r{background:var(--soft)}
 .sheet .close{padding:12px;margin:0 12px calc(12px + env(safe-area-inset-bottom));border-radius:12px;background:var(--bg);font-weight:700}
+.scanSheet>div{max-height:92vh}
+#reader{width:100%;background:#000;border-radius:12px;overflow:hidden}
+#reader video{width:100%!important}
+.scan-hint{padding:10px 14px;font-size:12px;color:var(--mute);text-align:center}
 </style>
 </head>
 <body>
@@ -71,7 +75,9 @@ th.r{background:var(--soft)}
 </div>
 <div class="toast" id="toast"><span id="tmsg"></span><b id="tundo" hidden>되돌리기</b></div>
 <div class="sheet" id="sheet"><div><h2><span>미리보기 (1행 = 기관명)</span></h2><div class="sc" id="pv"></div><button class="close" id="bClose">닫기</button></div></div>
+<div class="sheet scanSheet" id="scanSheet"><div><h2 style="display:flex;justify-content:space-between;align-items:center;padding:16px 18px 8px"><span id="scanTitle">바코드 스캔</span><button id="bCloseScan" style="padding:6px 12px;border-radius:8px;background:var(--bg);font-weight:700">닫기</button></h2><div id="reader"></div><div class="scan-hint" id="scanStatus">바코드를 카메라에 가져가면 자동으로 입력됩니다 · 연속 스캔 가능</div></div></div>
 
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
 const KEY='inst_excel_v2', SKEY='inst_excel_snd', MAX=12;
 let cols=load(), sets=new Map(), editing=null, undoSnap=null, tt, saveT, tact=null, ac, snd=true;
@@ -121,6 +127,7 @@ function colHTML(c){return `
   <section class="col" data-id="${c.id}">
     <div class="col-h">
       <input data-act="name" value="${esc(c.name)}" placeholder="기관명 입력 (1행)" enterkeyhint="done">
+      <button class="ib" data-act="scan" title="바코드 스캔" aria-label="바코드 스캔">📷</button>
       <button class="ib" data-act="clear" title="항목 비우기" aria-label="항목 비우기">⌫</button>
       <button class="ib" data-act="delcol" title="열 삭제" aria-label="열 삭제">🗑</button>
     </div>
@@ -161,6 +168,7 @@ app.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');if(!b)return;
   const a=b.dataset.act,sec=b.closest('.col'),id=sec&&sec.dataset.id,c=cols.find(x=>x.id===id),i=+b.dataset.i;
   if(a==='addcol'){if(cols.length>=MAX)return toast(`최대 ${MAX}개 열까지 가능해요`);cols.push({id:uid(),name:'',items:[]});persist();renderAll();window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})}
+  else if(a==='scan'){ openScan(id); }
   else if(a==='delcol'){if(cols.length<=1)return toast('최소 1개 열은 필요해요');snap();cols=cols.filter(x=>x.id!==id);sets.delete(id);persist();renderAll();toast('열을 삭제했어요',true)}
   else if(a==='clear'){if(!c.items.length)return;snap();c.items=[];sets.delete(id);persist();renderCol(id);toast('항목을 비웠어요',true)}
   else if(a==='del'){snap();c.items.splice(i,1);sets.delete(id);persist();renderCol(id);toast('삭제했어요',true)}
@@ -294,6 +302,81 @@ function preview(){
 $('#bShare').onclick=share;$('#bSave').onclick=save;$('#bCopy').onclick=copy;$('#bPrev').onclick=preview;
 $('#bClose').onclick=()=>$('#sheet').classList.remove('on');
 $('#sheet').onclick=e=>{if(e.target.id==='sheet')e.target.classList.remove('on')};
+
+/* ---------- 바코드 스캔 (연속 스캔) ---------- */
+let html5Qr = null, scanColId = null, lastScanned = '', lastTime = 0;
+function openScan(colId){
+  scanColId = colId;
+  const col = cols.find(x=>x.id===colId);
+  document.getElementById('scanTitle').textContent = (col&&col.name?col.name:'선택 열') + ' - 바코드 스캔';
+  document.getElementById('scanSheet').classList.add('on');
+  document.getElementById('scanStatus').textContent = '카메라 시작 중...';
+  if(!window.Html5Qrcode){
+    document.getElementById('scanStatus').textContent = '스캐너 라이브러리 로드 실패';
+    return;
+  }
+  html5Qr = new Html5Qrcode('reader');
+  html5Qr.start(
+    { facingMode: 'environment' },
+    { fps: 12, qrbox: { width: 250, height: 150 }, aspectRatio: 1.777 },
+    onScanSuccess,
+    ()=>{}
+  ).then(()=>{
+    document.getElementById('scanStatus').textContent = '바코드를 가져가면 자동 입력됩니다 (연속 스캔)';
+  }).catch(e=>{
+    document.getElementById('scanStatus').textContent = '카메라 권한 필요: '+e;
+  });
+}
+function closeScan(){
+  document.getElementById('scanSheet').classList.remove('on');
+  if(html5Qr){
+    html5Qr.stop().then(()=>{ html5Qr.clear(); html5Qr=null; }).catch(()=>{ html5Qr=null; });
+  }
+}
+function onScanSuccess(decodedText){
+  const now = Date.now();
+  // 같은 바코드가 2초 이내 연속으로 또 찍히면 무시 (중복 방지)
+  if(decodedText === lastScanned && now - lastTime < 2000) return;
+  lastScanned = decodedText; lastTime = now;
+  const c = cols.find(x=>x.id===scanColId);
+  if(!c) return;
+  const s = setOf(c);
+  if(s.has(decodedText)){
+    beep(false);
+    toast(`중복: ${decodedText}`, false);
+    document.getElementById('scanStatus').textContent = `중복됨: ${decodedText}`;
+    return;
+  }
+  // 추가
+  snap();
+  c.items.push(decodedText);
+  c.items = sortKo(c.items);
+  s.add(decodedText);
+  // UI 부분만 빠르게 갱신
+  const sec = document.querySelector(`[data-id="${scanColId}"]`);
+  if(sec){
+    sec.querySelector('.list').innerHTML = listHTML(c);
+    sec.querySelector('.cnt').textContent = c.items.length;
+    // 방금 추가된 항목 강조
+    const rows = sec.querySelectorAll('.row');
+    // 최신 항목은 맨 위(0번) 또는 정렬 후 위치 찾기
+    // 간단히 전체 다시 그렸으니 new 클래스 적용은 listHTML에서 처리하도록 - 여기서는 toast로
+  } else {
+    renderAll();
+  }
+  persist();
+  beep(true);
+  toast(`스캔 추가: ${decodedText}`, false);
+  document.getElementById('scanStatus').textContent = `추가됨: ${decodedText} - 다음 바코드 대기 중...`;
+  // 전체 요약 갱신
+  const total=cols.reduce((a,c)=>a+c.items.length,0);
+  document.getElementById('sum').textContent=`${cols.length}개 열 · 총 ${total}개 항목 · 자동 저장됨`;
+}
+document.getElementById('bCloseScan').onclick = closeScan;
+document.getElementById('scanSheet').addEventListener('click', e=>{ if(e.target.id==='scanSheet') closeScan(); });
+
+/* 기존 renderAll 이후 */
+
 renderAll();updSnd();
 </script>
 </body>
