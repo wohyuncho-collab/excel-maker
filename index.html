@@ -77,7 +77,7 @@ th.r{background:var(--soft)}
 <div class="sheet" id="sheet"><div><h2><span>미리보기 (1행 = 기관명)</span></h2><div class="sc" id="pv"></div><button class="close" id="bClose">닫기</button></div></div>
 <div class="sheet scanSheet" id="scanSheet"><div><h2 style="display:flex;justify-content:space-between;align-items:center;padding:16px 18px 8px"><span id="scanTitle">바코드 스캔</span><button id="bCloseScan" style="padding:6px 12px;border-radius:8px;background:var(--bg);font-weight:700">닫기</button></h2><div id="reader"></div><div class="scan-hint" id="scanStatus">바코드를 카메라에 가져가면 자동으로 입력됩니다 · 연속 스캔 가능</div></div></div>
 
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>addEventListener("error",function(e){var d=document.createElement("div");d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99;background:#E5484D;color:#fff;padding:8px 12px;font-size:12px";d.textContent="오류: "+e.message+" (줄 "+(e.lineno||"?")+")";document.body.appendChild(d)})</script>
 <script>
 const KEY='inst_excel_v2', SKEY='inst_excel_snd', MAX=12;
 let cols=load(), sets=new Map(), editing=null, undoSnap=null, tt, saveT, tact=null, ac, snd=true;
@@ -311,21 +311,42 @@ function openScan(colId){
   document.getElementById('scanTitle').textContent = (col&&col.name?col.name:'선택 열') + ' - 바코드 스캔';
   document.getElementById('scanSheet').classList.add('on');
   document.getElementById('scanStatus').textContent = '카메라 시작 중...';
-  if(!window.Html5Qrcode){
-    document.getElementById('scanStatus').textContent = '스캐너 라이브러리 로드 실패';
-    return;
-  }
-  html5Qr = new Html5Qrcode('reader');
-  html5Qr.start(
-    { facingMode: 'environment' },
-    { fps: 12, qrbox: { width: 250, height: 150 }, aspectRatio: 1.777 },
-    onScanSuccess,
-    ()=>{}
-  ).then(()=>{
+  loadScanner().then(camCheck).then(()=>{
+    html5Qr = new Html5Qrcode('reader');
+    return html5Qr.start(
+      { facingMode: 'environment' },
+      { fps: 12, qrbox: { width: 250, height: 150 }, aspectRatio: 1.777 },
+      onScanSuccess,
+      ()=>{}
+    );
+  }).then(()=>{
     document.getElementById('scanStatus').textContent = '바코드를 가져가면 자동 입력됩니다 (연속 스캔)';
   }).catch(e=>{
-    document.getElementById('scanStatus').textContent = '카메라 권한 필요: '+e;
+    document.getElementById('scanStatus').textContent = camMsg(e);
   });
+}
+/* 카메라 권한을 먼저 직접 요청 → 권한 창이 확실히 뜨고, 실패 원인도 정확히 구분됨 */
+async function camCheck(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw {name:'NoMediaDevices'};
+  const st=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}});
+  st.getTracks().forEach(t=>t.stop());
+}
+function camMsg(e){
+  const t=(e&&(e.name||e.message))||String(e);
+  let m;
+  if(/LibLoad/.test(t))m='스캐너 라이브러리를 불러오지 못했어요 (인터넷 연결 확인)';
+  else if(/NoMediaDevices/.test(t))m='이 환경은 카메라를 지원하지 않아요 (HTTPS 주소나 앱에서 열어 주세요)';
+  else if(/NotAllowed|Permission|Security/i.test(t))m='카메라 권한이 거부됐어요. 폰 설정 → 앱 → 이 앱 → 권한 → 카메라를 허용해 주세요';
+  else if(/NotFound|Requested device|No camera/i.test(t))m='사용할 카메라를 찾지 못했어요';
+  else if(/NotReadable|in use/i.test(t))m='다른 앱이 카메라를 쓰는 중이에요. 닫고 다시 시도해 주세요';
+  else m='카메라를 시작하지 못했어요';
+  return m+'  [세부: '+t+']';
+}
+/* 스캐너 라이브러리는 📷를 처음 누를 때만 불러옴 → 초기 화면 표시가 막히지 않음 (앱 내장본 우선, 없으면 CDN) */
+function loadScanner(){
+  if(window.Html5Qrcode)return Promise.resolve();
+  const srcs=['html5-qrcode.min.js','https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js'];
+  return srcs.reduce((p,src)=>p.catch(()=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=()=>window.Html5Qrcode?res():rej();s.onerror=rej;document.head.appendChild(s)})),Promise.reject()).catch(()=>{throw {name:'LibLoad'}});
 }
 function closeScan(){
   document.getElementById('scanSheet').classList.remove('on');
