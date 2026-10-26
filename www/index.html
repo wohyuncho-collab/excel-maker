@@ -140,7 +140,7 @@ body.barcode-scanner-active #nScan *{visibility:visible}
 <script>addEventListener("error",function(e){var d=document.createElement("div");d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99;background:#E5484D;color:#fff;padding:8px 12px;font-size:12px";d.textContent="오류: "+e.message+" (줄 "+(e.lineno||"?")+")";document.body.appendChild(d)})</script>
 <script>
 const KEY='inst_excel_v2', SKEY='inst_excel_snd', CKEY='label_scan_cfg', MAX=12;
-const CFG=Object.assign({term:'기관',sort:'asc',dedupe:true,seq:false,prefix:'BarcodeScan',snd:true,vib:true,once:false,photo:true},(()=>{try{return JSON.parse(localStorage.getItem('label_scan_cfg'))||{}}catch(e){return {}}})());
+const CFG=Object.assign({term:'기관',sort:'asc',dedupe:true,seq:false,prefix:'BarcodeScan',snd:true,vib:true,once:false,photo:true,gap:'1500'},(()=>{try{return JSON.parse(localStorage.getItem('label_scan_cfg'))||{}}catch(e){return {}}})());
 const photos=new Set();
 if(CFG.prefix==='LabelScan')CFG.prefix='BarcodeScan';
 const IC=n=>`<svg class="ic"><use href="#i-${n}"/></svg>`;
@@ -460,7 +460,7 @@ function onScanSuccess(decodedText){
   const now = Date.now(), prev = seen.get(decodedText);
   seen.set(decodedText, now);
   if(seen.size > 300){ for(const [k,t] of seen) if(now - t > 5000) seen.delete(k); }
-  if(prev && now - prev < 1500) return;
+  if(prev && now - prev < (+CFG.gap||1500)) return;
   const c = cols.find(x=>x.id===scanColId);
   if(!c) return;
   const dup = CFG.dedupe && setOf(c).has(decodedText);
@@ -577,6 +577,7 @@ const OPTS=[
   ['text','term','항목 이름 (엑셀 1행 제목에 사용)',['기관','제품','품목','창고','고객','분류','부품']],
   ['sel','sort','엑셀 정렬',[['asc','오름차순'],['desc','내림차순'],['none','입력 순서 그대로']]],
   ['chk','dedupe','중복 항목 제외'],
+  ['sel','gap','재스캔 간격 (같은 바코드)',[['500','0.5초'],['1000','1초'],['1500','1.5초']]],
   ['chk','seq','엑셀에 순번 열 추가'],
   ['text','prefix','엑셀 파일 이름'],
   ['chk','snd','스캔 소리'],['chk','vib','스캔 진동'],
