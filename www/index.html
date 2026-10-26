@@ -84,6 +84,7 @@ td.r,th.r{background:var(--soft);color:var(--mute);font-size:11px;width:34px}
 .scanSheet>div{max-height:92vh}
 #reader{position:relative;width:100%;background:#000;border-radius:14px;overflow:hidden}
 #reader::after{content:"";position:absolute;left:4%;right:4%;top:28%;bottom:28%;border:2px solid rgba(255,255,255,.92);border-radius:16px;pointer-events:none;box-shadow:0 0 0 9999px rgba(0,0,0,.28)}
+.zb{display:flex;gap:8px;padding:10px 14px 0}.zb button.on{background:var(--ink);color:var(--on-ink)}.zb button{display:flex;align-items:center;justify-content:center;gap:5px;flex:1;height:42px;border-radius:12px;background:var(--soft);border:1px solid var(--line);font-weight:700}
 .scan-hint{padding:10px 14px;font-size:12px;color:var(--mute);text-align:center}
 html.scan{color-scheme:normal!important;background:transparent!important}
 body.barcode-scanner-active{visibility:hidden;background:transparent!important}
@@ -140,7 +141,7 @@ body.barcode-scanner-active #nScan *{visibility:visible}
 <script>addEventListener("error",function(e){var d=document.createElement("div");d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99;background:#E5484D;color:#fff;padding:8px 12px;font-size:12px";d.textContent="오류: "+e.message+" (줄 "+(e.lineno||"?")+")";document.body.appendChild(d)})</script>
 <script>
 const KEY='inst_excel_v2', SKEY='inst_excel_snd', CKEY='label_scan_cfg', MAX=12;
-const CFG=Object.assign({term:'기관',sort:'asc',dedupe:true,seq:false,prefix:'BarcodeScan',snd:true,vib:true,once:false,photo:true,gap:'1500'},(()=>{try{return JSON.parse(localStorage.getItem('label_scan_cfg'))||{}}catch(e){return {}}})());
+const CFG=Object.assign({term:'기관',sort:'asc',dedupe:true,seq:false,prefix:'BarcodeScan',snd:true,vib:true,once:false,photo:true,gap:'1500',zoom:'2',res:'1280',torch:false},(()=>{try{return JSON.parse(localStorage.getItem('label_scan_cfg'))||{}}catch(e){return {}}})());
 const photos=new Set();
 if(CFG.prefix==='LabelScan')CFG.prefix='BarcodeScan';
 const IC=n=>`<svg class="ic"><use href="#i-${n}"/></svg>`;
@@ -389,9 +390,32 @@ $('#sheet').onclick=e=>{if(e.target.id==='sheet')e.target.classList.remove('on')
 
 /* ---------- 바코드 스캔 (연속 스캔) ---------- */
 let html5Qr = null, scanColId = null, lastScanned = '', lastTime = 0;
-let frames=0;
+let frames=0,zoomTxt='';
+function applyZoomWeb(z){
+  try{
+    const caps=html5Qr&&html5Qr.getRunningTrackCapabilities&&html5Qr.getRunningTrackCapabilities();
+    if(caps&&caps.zoom){
+      const zz=Math.min(caps.zoom.max,Math.max(caps.zoom.min,z));
+      html5Qr.applyVideoConstraints({advanced:[{zoom:zz}]}).then(()=>{zoomTxt='줌 '+(+zz.toFixed(1))+'x · '}).catch(()=>{zoomTxt='줌 적용 실패 · '});
+    }else zoomTxt='이 카메라는 줌 미지원 · ';
+  }catch(e){zoomTxt=''}
+}
+let torchOn=false;
+async function toggleTorchWeb(){
+  const tb=document.getElementById('wTorch');
+  try{
+    const caps=html5Qr&&html5Qr.getRunningTrackCapabilities&&html5Qr.getRunningTrackCapabilities();
+    if(!caps||!('torch' in caps)){toast('이 카메라는 조명 제어를 지원하지 않아요');return}
+    torchOn=!torchOn;
+    await html5Qr.applyVideoConstraints({advanced:[{torch:torchOn}]});
+    if(tb)tb.classList.toggle('on',torchOn);
+  }catch(e){torchOn=false;if(tb)tb.classList.remove('on');toast('조명을 켜지 못했어요')}
+}
+document.addEventListener('click',e=>{const b=e.target.closest('#wzoom button');if(b){if(b.id==='wTorch')toggleTorchWeb();else applyZoomWeb(+b.dataset.z)}});
 function openWebScan(colId){
-  frames=0;
+  frames=0;zoomTxt='';torchOn=false;
+  if(!document.getElementById('wzoom'))document.getElementById('reader').insertAdjacentHTML('afterend','<div id="wzoom" class="zb"><button data-z="1">1x</button><button data-z="2">2x</button><button data-z="3">3x</button><button id="wTorch">'+IC('bolt')+'조명</button></div>');
+  {const tb=document.getElementById('wTorch');if(tb)tb.classList.remove('on')}
   if(!document.getElementById('scanFrames'))document.getElementById('scanStatus').insertAdjacentHTML('afterend','<div id="scanFrames" style="font-size:11px;color:var(--mute);padding:2px 0"></div>');
   scanColId = colId; seen.clear();
   const col = cols.find(x=>x.id===colId);
@@ -411,13 +435,15 @@ function openWebScan(colId){
       {
         fps: 15,
         // 인식 영역(qrbox)을 지정하지 않으면 영상 전체를 해독 → 화면과 인식 위치가 어긋날 일이 없음
-        videoConstraints:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}
+        videoConstraints:{facingMode:'environment',width:{ideal:+CFG.res||1280},height:{ideal:CFG.res==='1920'?1080:720}}
       },
       onScanSuccess,
-      ()=>{frames++;if(frames%10===0){const f=document.getElementById('scanFrames');if(f)f.textContent='해독 시도 '+frames+'회 (숫자가 오르면 카메라는 정상 동작 중)'}}
+      ()=>{frames++;if(frames%10===0){const f=document.getElementById('scanFrames');if(f)f.textContent=zoomTxt+'해독 시도 '+frames+'회 (숫자가 오르면 카메라는 정상 동작 중)'}}
     );
   }).then(()=>{
     try{html5Qr.applyVideoConstraints({advanced:[{focusMode:'continuous'}]}).catch(()=>{})}catch(e){}
+    setTimeout(()=>applyZoomWeb(+CFG.zoom||1),300);
+    if(CFG.torch)setTimeout(toggleTorchWeb,800);
     document.getElementById('scanStatus').textContent = '화면 안에 바코드를 비추면 자동 입력돼요 (10~20cm, 연속 스캔)';
   }).catch(e=>{
     document.getElementById('scanStatus').textContent = camMsg(e);
@@ -496,6 +522,7 @@ async function openNative(colId,B){
     for(const b of (ev.barcodes||[])){const v=String(b.rawValue||b.displayValue||'').trim();if(v)onScanSuccess(v)}
   });
   await B.startScan();
+  setTimeout(async()=>{try{await B.setZoomRatio({zoomRatio:+CFG.zoom||1})}catch(e){}if(CFG.torch){try{await B.enableTorch()}catch(e){}}},400);
 }
 async function closeNative(){
   const B=NS();
@@ -577,6 +604,9 @@ const OPTS=[
   ['text','term','항목 이름 (엑셀 1행 제목에 사용)',['기관','제품','품목','창고','고객','분류','부품']],
   ['sel','sort','엑셀 정렬',[['asc','오름차순'],['desc','내림차순'],['none','입력 순서 그대로']]],
   ['chk','dedupe','중복 항목 제외'],
+  ['chk','torch','스캔을 켤 때 조명 자동으로 켜기'],
+  ['sel','zoom','기본 줌 배율 (스캔을 켤 때)',[['1','1x'],['2','2x'],['3','3x']]],
+  ['sel','res','일반 카메라 해상도',[['1280','표준 (빠름)'],['1920','고해상도 (느림)']]],
   ['sel','gap','재스캔 간격 (같은 바코드)',[['500','0.5초'],['1000','1초'],['1500','1.5초']]],
   ['chk','seq','엑셀에 순번 열 추가'],
   ['text','prefix','엑셀 파일 이름'],
