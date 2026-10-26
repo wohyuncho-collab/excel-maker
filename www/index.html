@@ -3,101 +3,143 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#3A5BFF">
-<title>기관별 엑셀표 생성기</title>
+<meta name="theme-color" content="#0F1013">
+<title>Barcode scan</title>
 <style>
-:root{--bg:#F4F6FB;--card:#fff;--line:#E3E7F1;--text:#141926;--mute:#6B728E;--pri:#3A5BFF;--pri-d:#2A43C5;--soft:#EBEFFF;--red:#E5484D;color-scheme:light}
-@media(prefers-color-scheme:dark){:root{--bg:#0E1018;--card:#181B29;--line:#2A2F45;--text:#F2F3F8;--mute:#9AA0BB;--pri:#6B84FF;--pri-d:#4F66E8;--soft:#252A45;--red:#FF6B70;color-scheme:dark}}
+:root{--bg:#F3F3F0;--card:#fff;--line:#E4E3DD;--text:#0F1013;--mute:#6B6F7A;--acc:#F2551B;--acc-s:#FFEFE8;--ink:#0F1013;--on-ink:#fff;--red:#D92D20;--soft:#F6F5F1;--shadow:0 10px 32px rgba(15,16,19,.14);color-scheme:light}
+@media(prefers-color-scheme:dark){:root{--bg:#0A0B0E;--card:#14161B;--line:#262A33;--text:#F4F5F7;--mute:#9AA2B0;--acc:#FF7A45;--acc-s:#2B1D16;--ink:#F4F5F7;--on-ink:#0A0B0E;--red:#FF7A70;--soft:#1B1E25;--shadow:0 10px 32px rgba(0,0,0,.5);color-scheme:dark}}
 *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
-body{font-family:Pretendard,-apple-system,"Noto Sans KR","Apple SD Gothic Neo",Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:15px;padding:env(safe-area-inset-top) 0 calc(88px + env(safe-area-inset-bottom))}
-button,input{font:inherit;color:inherit}
+body{font-family:Pretendard,-apple-system,"Noto Sans KR","Apple SD Gothic Neo",Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.4;padding:env(safe-area-inset-top) 0 calc(108px + env(safe-area-inset-bottom));-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
 button{border:0;cursor:pointer;background:none}
-header{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px);padding:14px 16px 10px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}
-.snd{height:40px;padding:0 12px;border-radius:12px;background:var(--card);border:1px solid var(--line);font-size:13px;font-weight:700;white-space:nowrap}
-header h1{font-size:18px;font-weight:800;letter-spacing:-.02em}
-header p{font-size:12.5px;color:var(--mute);margin-top:3px}
-main{max-width:1100px;margin:0 auto;padding:14px 16px;display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
-.col{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;display:flex;flex-direction:column}
-.col-h{background:var(--pri);padding:10px;display:flex;gap:6px;align-items:center}
-.col-h input{flex:1;min-width:0;height:42px;border:0;border-radius:12px;padding:0 12px;font-weight:700;background:#fff;color:#141926}
-.col-h input::placeholder{color:#8a90a8;font-weight:500}
-.ib{width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.18);color:#fff;font-size:17px}
-.ib:active{background:rgba(255,255,255,.32)}
-.meta{padding:8px 16px 2px;font-size:13px;color:var(--mute);display:flex;justify-content:space-between;align-items:center}.ul{font-size:12px;font-weight:700;color:var(--mute);padding:6px 10px;border-radius:999px;border:1px solid var(--line)}.ul:active{background:var(--line)}.meta b{color:var(--pri);font-size:15px}
-.list{padding:8px 10px;display:flex;flex-direction:column;gap:6px;max-height:42vh;overflow-y:auto}
-.empty{padding:18px 8px;text-align:center;color:var(--mute);font-size:13px;border:1px dashed var(--line);border-radius:12px}
-.row{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 6px 0 12px;border-radius:12px;background:var(--bg)}
-.row .n{width:34px;font-size:11px;font-weight:700;color:var(--mute)}
-.row .t{flex:1;text-align:left;padding:12px 0;word-break:break-all}
-.row .x{width:36px;height:36px;border-radius:50%;color:var(--mute);font-size:18px}
-.row .x:active{background:var(--line);color:var(--red)}
-.row input{flex:1;height:40px;border:2px solid var(--pri);border-radius:10px;padding:0 10px;background:var(--soft)}
-.add{display:flex;gap:8px;padding:6px 10px 8px}.add input.bad{outline:2px solid var(--red);outline-offset:1px}.row.new{animation:fl .7s}@keyframes fl{from{background:var(--soft);box-shadow:0 0 0 2px var(--pri) inset}to{background:var(--bg)}}
-.add input{flex:1;min-width:0;height:46px;border:1px solid var(--line);border-radius:12px;padding:0 14px;background:var(--card)}
-.add input:focus,.col-h input:focus{outline:2px solid var(--pri);outline-offset:1px}
-.add button{padding:0 18px;border-radius:12px;background:var(--text);color:var(--card);font-weight:700}
-.addcol{min-height:64px;border:2px dashed var(--line);border-radius:18px;color:var(--mute);font-weight:700}
-.bar{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--card);border-top:1px solid var(--line);padding:10px 12px calc(10px + env(safe-area-inset-bottom));display:flex;gap:8px;justify-content:center}
-.bar button{flex:1;max-width:200px;height:48px;border-radius:14px;font-weight:700;background:var(--bg);border:1px solid var(--line)}
-.bar .p{background:var(--pri);color:#fff;border-color:var(--pri)}
-.bar .p:active{background:var(--pri-d)}
-.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:20;background:var(--text);color:var(--card);padding:12px 18px;border-radius:999px;font-size:13.5px;font-weight:600;display:none;align-items:center;gap:12px;max-width:92vw;line-height:1.4}
+.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+header{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 16px;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(14px)}
+.brand{display:flex;align-items:center;gap:11px;min-width:0}
+.logo{width:40px;height:40px;border-radius:12px;background:var(--ink);color:var(--on-ink);display:grid;place-items:center;flex:none}
+header h1{font-size:19px;font-weight:800;letter-spacing:-.03em}
+header p{font-size:12px;color:var(--mute);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.icb{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;border:1px solid var(--line);background:var(--card);flex:none}
+.icb:active{background:var(--soft)}
+main{max-width:1100px;margin:0 auto;padding:6px 14px 14px;display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(290px,1fr))}
+.col{background:var(--card);border:1px solid var(--line);border-radius:22px;display:flex;flex-direction:column;overflow:hidden}
+.col-h{display:flex;align-items:center;gap:8px;padding:14px 12px 6px 14px}
+.chip{width:30px;height:30px;border-radius:9px;background:var(--acc-s);color:var(--acc);font-weight:800;font-size:13px;display:grid;place-items:center;flex:none}
+.col-h input{flex:1;min-width:0;height:40px;border:0;background:transparent;font-size:17px;font-weight:700;letter-spacing:-.02em}
+.col-h input::placeholder{color:var(--mute);font-weight:500}
+.col-h input:focus,.add input:focus{outline:2px solid var(--acc);outline-offset:1px;border-radius:10px}
+.col-h .icb{width:38px;height:38px;border-radius:11px}
+.meta{padding:2px 14px 10px;display:flex;justify-content:space-between;align-items:flex-end}
+.big{display:flex;align-items:baseline;gap:3px;color:var(--mute);font-size:13px}
+.big b{font-size:30px;font-weight:800;color:var(--text);letter-spacing:-.04em;line-height:1}
+.mb{display:flex;gap:6px}
+.ul{font-size:12px;font-weight:600;color:var(--mute);padding:6px 10px;border-radius:999px;background:var(--soft)}
+.ul:active{background:var(--line)}
+.add{display:flex;gap:8px;padding:0 12px 12px}
+.add input{flex:1;min-width:0;height:46px;border:1px solid var(--line);border-radius:14px;padding:0 14px;background:var(--soft)}
+.add input.bad{outline:2px solid var(--red);outline-offset:1px}
+.add button{padding:0 18px;border-radius:14px;background:var(--ink);color:var(--on-ink);font-weight:700}
+.list{padding:0 8px 6px;max-height:44vh;overflow-y:auto;border-top:1px solid var(--line)}
+.row{display:flex;align-items:center;gap:6px;min-height:46px;padding:0 4px 0 8px;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row .n{width:34px;font-size:11px;font-weight:700;color:var(--mute);font-variant-numeric:tabular-nums}
+.row .t{flex:1;text-align:left;padding:12px 0;word-break:break-all;font-weight:500}
+.row .x{width:36px;height:36px;border-radius:50%;color:var(--mute);display:grid;place-items:center}
+.row .x .ic{width:18px;height:18px}
+.row .x:active{background:var(--soft);color:var(--red)}
+.row .ph{color:var(--acc)}
+.row input{flex:1;height:40px;border:2px solid var(--acc);border-radius:10px;padding:0 10px;background:var(--acc-s)}
+.row.new{animation:fl .8s}
+@keyframes fl{from{background:var(--acc-s)}to{background:transparent}}
+.empty{padding:26px 10px;text-align:center;color:var(--mute);font-size:13px}
+.addcol{min-height:64px;border:1.5px dashed var(--line);border-radius:22px;color:var(--mute);font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px}
+.bar{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:6;max-width:560px;margin:0 auto;background:var(--card);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:8px;display:flex;gap:6px}
+.bar button{flex:1;height:54px;border-radius:17px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11.5px;font-weight:700;color:var(--mute)}
+.bar button:active{background:var(--soft)}
+.bar .p{background:var(--ink);color:var(--on-ink)}
+.toast{position:fixed;left:50%;bottom:calc(98px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:20;background:var(--ink);color:var(--on-ink);padding:12px 18px;border-radius:999px;font-size:13.5px;font-weight:600;display:none;align-items:center;gap:12px;max-width:92vw;line-height:1.4;box-shadow:var(--shadow)}
 .toast.on{display:flex}
-.toast b{color:var(--pri);cursor:pointer;filter:brightness(1.4)}
-.sheet{position:fixed;inset:0;z-index:15;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center}
+.toast b{color:var(--acc);cursor:pointer}
+.sheet{position:fixed;inset:0;z-index:15;background:rgba(10,11,14,.5);display:none;align-items:flex-end;justify-content:center}
 .sheet.on{display:flex}
-.sheet>div{background:var(--card);width:100%;max-width:900px;max-height:82vh;border-radius:20px 20px 0 0;display:flex;flex-direction:column}
-.sheet h2{font-size:16px;padding:16px 18px 8px;display:flex;justify-content:space-between}
-.sheet .sc{overflow:auto;padding:0 12px 12px}
+.sheet>div{background:var(--card);width:100%;max-width:900px;max-height:84vh;border-radius:26px 26px 0 0;display:flex;flex-direction:column}
+.sheet h2{font-size:17px;font-weight:800;padding:20px 20px 10px;display:flex;justify-content:space-between;letter-spacing:-.02em}
+.sheet .sc{overflow:auto;padding:0 14px 12px}
+.sheet .close{padding:15px;margin:4px 14px calc(14px + env(safe-area-inset-bottom));border-radius:16px;background:var(--ink);color:var(--on-ink);font-weight:700}
 table{border-collapse:collapse;font-size:13px;min-width:100%}
-th,td{border:1px solid var(--line);padding:7px 10px;white-space:nowrap;text-align:center}
-th{background:var(--pri);color:#fff}
-td.r,th.r{background:var(--soft);color:var(--mute);text-align:center;font-size:11px;width:34px}
-th.r{background:var(--soft)}
-.sheet .close{padding:12px;margin:0 12px calc(12px + env(safe-area-inset-bottom));border-radius:12px;background:var(--bg);font-weight:700}
+th,td{border:1px solid var(--line);padding:8px 12px;white-space:nowrap;text-align:center}
+th{background:var(--ink);color:var(--on-ink)}
+td.r,th.r{background:var(--soft);color:var(--mute);font-size:11px;width:34px}
+.opt{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 6px;border-bottom:1px solid var(--line);font-weight:600}
+.opt.tx{flex-direction:column;align-items:stretch;gap:8px}
+.opt input[type=text],.opt select{height:46px;border:1px solid var(--line);border-radius:12px;padding:0 12px;background:var(--soft)}
+.opt input[type=checkbox]{appearance:none;-webkit-appearance:none;width:50px;height:30px;border-radius:999px;background:var(--line);position:relative;flex:none;transition:background .2s}
+.opt input[type=checkbox]::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s}
+.opt input[type=checkbox]:checked{background:var(--acc)}
+.opt input[type=checkbox]:checked::after{transform:translateX(20px)}
+.hint{padding:14px 6px;color:var(--mute);font-size:12.5px;line-height:1.55}
+.phb{display:flex;gap:8px;padding:10px 14px}
+.phb button{flex:1;height:48px;border-radius:14px;background:var(--soft);border:1px solid var(--line);font-weight:700}
 .scanSheet>div{max-height:92vh}
-#reader{width:100%;background:#000;border-radius:12px;overflow:hidden}
-#reader video{width:100%!important}
+#reader{position:relative;width:100%;background:#000;border-radius:14px;overflow:hidden}
+#reader::after{content:"";position:absolute;left:4%;right:4%;top:28%;bottom:28%;border:2px solid rgba(255,255,255,.92);border-radius:16px;pointer-events:none;box-shadow:0 0 0 9999px rgba(0,0,0,.28)}
 .scan-hint{padding:10px 14px;font-size:12px;color:var(--mute);text-align:center}
-
-/* 네이티브(ML Kit) 스캐너: 카메라 화면이 웹뷰 뒤에 깔리므로 배경을 투명하게 */
 html.scan{color-scheme:normal!important;background:transparent!important}
 body.barcode-scanner-active{visibility:hidden;background:transparent!important}
 #nScan{display:none;position:fixed;inset:0;z-index:50;flex-direction:column;justify-content:space-between;visibility:hidden}
 body.barcode-scanner-active #nScan{display:flex;visibility:visible}
 body.barcode-scanner-active #nScan *{visibility:visible}
-.nTop,.nBot{background:rgba(0,0,0,.62);color:#fff;padding:12px 14px}
+.nTop,.nBot{background:rgba(8,9,12,.68);color:#fff;padding:12px 14px}
 .nTop{padding-top:calc(12px + env(safe-area-inset-top));display:flex;justify-content:space-between;align-items:center;font-weight:700}
 .nBot{padding-bottom:calc(14px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px}
 #nStatus{font-size:14px;min-height:20px;word-break:break-all}
 .nBtns{display:flex;gap:8px}
-.nBtns button,#nClose{height:44px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.2);color:#fff;font-weight:700}
+.nBtns button,#nClose{height:44px;padding:0 14px;border-radius:14px;background:rgba(255,255,255,.16);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px}
 .nBtns button{flex:1}
 .nMid{flex:1;display:flex;align-items:center;justify-content:center}
-.nBox{position:relative;width:95%;height:34%;border:2px solid rgba(255,255,255,.9);border-radius:14px}
-.nBox::after{content:"";position:absolute;left:6%;right:6%;top:50%;height:2px;background:#ff3b30}
+.nBox{position:relative;width:95%;height:34%;border:2px solid rgba(255,255,255,.92);border-radius:16px}
+.nBox::after{content:"";position:absolute;left:6%;right:6%;top:50%;height:2px;background:#FF5B1F}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-bars" viewBox="0 0 24 24"><path d="M5 5v14M9 5v14M16 5v14M19 5v14" stroke-width="1.7"/><path d="M12.5 5v14" stroke-width="3"/></symbol>
+<symbol id="i-tune" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V7a2 2 0 0 1 2-2h8"/></symbol>
+<symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 19h14"/></symbol>
+<symbol id="i-share" viewBox="0 0 24 24"><path d="M12 15V4m0 0L8 8m4-4l4 4M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></symbol>
+<symbol id="i-scan" viewBox="0 0 24 24"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M8.5 9v6M12 9v6M15.5 9v6"/></symbol>
+<symbol id="i-cam" viewBox="0 0 24 24"><path d="M4 8a2 2 0 0 1 2-2h1.5l1.5-2h6l1.5 2H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="i-img" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="M4 17l5-4 4 3 3-2 4 3"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 3L5 14h6l-1 7 8-11h-6l1-7z"/></symbol>
+</defs></svg>
 <header>
-  <div><h1>기관별 엑셀표 생성기</h1><p id="sum"></p></div>
-  <button id="bSnd" class="snd"></button>
+  <div class="brand"><span class="logo"><svg class="ic"><use href="#i-bars"/></svg></span><div><h1>Barcode scan</h1><p id="sum"></p></div></div>
+  <button id="bSet" class="icb" aria-label="설정"><svg class="ic"><use href="#i-tune"/></svg></button>
 </header>
 <main id="app"></main>
 <div class="bar">
-  <button id="bPrev">미리보기</button>
-  <button id="bCopy">복사</button>
-  <button id="bSave">저장</button>
-  <button id="bShare" class="p">공유</button>
+  <button id="bPrev"><svg class="ic"><use href="#i-eye"/></svg>미리보기</button>
+  <button id="bCopy"><svg class="ic"><use href="#i-copy"/></svg>복사</button>
+  <button id="bSave"><svg class="ic"><use href="#i-down"/></svg>저장</button>
+  <button id="bShare" class="p"><svg class="ic"><use href="#i-share"/></svg>공유</button>
 </div>
 <div class="toast" id="toast"><span id="tmsg"></span><b id="tundo" hidden>되돌리기</b></div>
-<div class="sheet" id="sheet"><div><h2><span>미리보기 (1행 = 기관명)</span></h2><div class="sc" id="pv"></div><button class="close" id="bClose">닫기</button></div></div>
+<div class="sheet" id="sheet"><div><h2><span>엑셀 미리보기</span></h2><div class="sc" id="pv"></div><button class="close" id="bClose">닫기</button></div></div>
 <div class="sheet scanSheet" id="scanSheet"><div><h2 style="display:flex;justify-content:space-between;align-items:center;padding:16px 18px 8px"><span id="scanTitle">바코드 스캔</span><button id="bCloseScan" style="padding:6px 12px;border-radius:8px;background:var(--bg);font-weight:700">닫기</button></h2><div id="reader"></div><div class="scan-hint" id="scanStatus">바코드를 카메라에 가져가면 자동으로 입력됩니다 · 연속 스캔 가능</div></div></div>
 
-<div id="nScan"><div class="nTop"><span id="nTitle"></span><button id="nClose">✕ 닫기</button></div><div class="nMid"><div class="nBox"></div></div><div class="nBot"><div id="nStatus"></div><div class="nBtns"><button id="nTorch">🔦 조명</button><button data-z="1">1x</button><button data-z="2">2x</button><button data-z="3">3x</button></div></div></div>
+<input type="file" id="fPhoto" accept="image/*" capture="environment" hidden>
+<div class="sheet" id="setSheet"><div><h2><span>설정</span></h2><div class="sc" id="setBody"></div><button class="close" id="bSetClose">완료</button></div></div>
+<div class="sheet" id="phSheet"><div><h2><span id="phCap"></span></h2><div class="sc" style="text-align:center"><img id="phImg" alt="" style="max-width:100%;border-radius:12px"></div><div class="phb"><button id="phShare">공유 · 저장</button><button id="phDel">삭제</button></div><button class="close" id="phClose">닫기</button></div></div>
+<div id="nScan"><div class="nTop"><span id="nTitle"></span><button id="nClose"><svg class="ic"><use href="#i-x"/></svg>닫기</button></div><div class="nMid"><div class="nBox"></div></div><div class="nBot"><div id="nStatus"></div><div class="nBtns"><button id="nTorch"><svg class="ic"><use href="#i-bolt"/></svg>조명</button><button data-z="1">1x</button><button data-z="2">2x</button><button data-z="3">3x</button></div></div></div>
 <script>addEventListener("error",function(e){var d=document.createElement("div");d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99;background:#E5484D;color:#fff;padding:8px 12px;font-size:12px";d.textContent="오류: "+e.message+" (줄 "+(e.lineno||"?")+")";document.body.appendChild(d)})</script>
 <script>
-const KEY='inst_excel_v2', SKEY='inst_excel_snd', MAX=12;
+const KEY='inst_excel_v2', SKEY='inst_excel_snd', CKEY='label_scan_cfg', MAX=12;
+const CFG=Object.assign({term:'기관',sort:'asc',dedupe:true,seq:false,prefix:'LabelScan',snd:true,vib:true,once:false,photo:true},(()=>{try{return JSON.parse(localStorage.getItem('label_scan_cfg'))||{}}catch(e){return {}}})());
+const photos=new Set();
+const IC=n=>`<svg class="ic"><use href="#i-${n}"/></svg>`;
 let cols=load(), sets=new Map(), editing=null, undoSnap=null, tt, saveT, tact=null, ac, snd=true;
 try{snd=localStorage.getItem(SKEY)!=='0'}catch(e){}
 const $=s=>document.querySelector(s), app=$('#app');
@@ -116,16 +158,17 @@ const setOf=c=>{let s=sets.get(c.id);if(!s){s=new Set(c.items);sets.set(c.id,s)}
 
 /* ---------- 알림 (소리·진동·토스트) ---------- */
 function beep(ok){
-  if(!snd)return;
   try{
-    ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume();
-    const t=ac.currentTime,seq=ok?[[1400,0,.05]]:[[300,0,.12],[300,.18,.12]];
-    for(const [f,d,l] of seq){const o=ac.createOscillator(),g=ac.createGain();o.type='square';o.frequency.value=f;g.gain.value=.08;o.connect(g);g.connect(ac.destination);o.start(t+d);o.stop(t+d+l)}
-    if(navigator.vibrate)navigator.vibrate(ok?25:[70,50,70]);
+    if(CFG.snd){
+      ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume();
+      const t=ac.currentTime,seq=ok?[[1400,0,.05]]:[[300,0,.12],[300,.18,.12]];
+      for(const [f,d,l] of seq){const o=ac.createOscillator(),g=ac.createGain();o.type='square';o.frequency.value=f;g.gain.value=.08;o.connect(g);g.connect(ac.destination);o.start(t+d);o.stop(t+d+l)}
+    }
+    if(CFG.vib&&navigator.vibrate)navigator.vibrate(ok?25:[70,50,70]);
   }catch(e){}
 }
-function updSnd(){$('#bSnd').textContent=snd?'🔔 소리 켬':'🔕 소리 끔'}
-$('#bSnd').onclick=()=>{snd=!snd;try{localStorage.setItem(SKEY,snd?'1':'0')}catch(e){}updSnd();beep(true)};
+const termName=()=>{const t=(CFG.term||'항목').trim()||'항목';return /(명|이름)$/.test(t)?t:t+'명'};
+function cfgSave(){try{localStorage.setItem(CKEY,JSON.stringify(CFG))}catch(e){}}
 function toast(msg,undo,act){clearTimeout(tt);tact=act||null;$('#tmsg').textContent=msg;$('#tundo').textContent=act?act.label:'되돌리기';$('#tundo').hidden=!(undo||act);$('#toast').classList.add('on');tt=setTimeout(()=>$('#toast').classList.remove('on'),act?7000:undo?4500:2200)}
 function snap(){undoSnap=JSON.stringify(cols)}
 $('#tundo').onclick=()=>{
@@ -134,28 +177,29 @@ $('#tundo').onclick=()=>{
 };
 
 /* ---------- 화면 (입력창 → 총 개수 → 목록, 최신 항목이 맨 위) ---------- */
-function rowHTML(i,t,isNew){return `<div class="row${isNew?' new':''}"><span class="n">${i+1}</span><button class="t" data-act="start" data-i="${i}">${esc(t)}</button><button class="x" data-act="del" data-i="${i}" aria-label="삭제">×</button></div>`}
+const PH=i=>`<button class="x ph" data-act="photo" data-i="${i}" aria-label="사진 보기">${IC('img')}</button>`;
+function rowHTML(i,t,isNew,cid){return `<div class="row${isNew?' new':''}"><span class="n">${i+1}</span><button class="t" data-act="start" data-i="${i}">${esc(t)}</button>${cid&&photos.has(cid+'|'+t)?PH(i):''}<button class="x" data-act="del" data-i="${i}" aria-label="삭제">${IC('x')}</button></div>`}
 function editHTML(i,t){return `<div class="row"><span class="n">${i+1}</span><input data-act="edit" value="${esc(t)}"></div>`}
 function listHTML(c){
   if(!c.items.length)return '<div class="empty">스캔하거나 입력하면 여기에 쌓여요<br>(최신 항목이 맨 위)</div>';
-  let h='';for(let i=c.items.length-1;i>=0;i--)h+=editing&&editing.id===c.id&&editing.i===i?editHTML(i,c.items[i]):rowHTML(i,c.items[i]);
+  let h='';for(let i=c.items.length-1;i>=0;i--)h+=editing&&editing.id===c.id&&editing.i===i?editHTML(i,c.items[i]):rowHTML(i,c.items[i],false,c.id);
   return h;
 }
-function colHTML(c){return `
+function colHTML(c){const L=String.fromCharCode(65+cols.indexOf(c)+(CFG.seq?1:0));return `
   <section class="col" data-id="${c.id}">
     <div class="col-h">
-      <input data-act="name" value="${esc(c.name)}" placeholder="기관명 입력 (1행)" enterkeyhint="done">
-      <button class="ib" data-act="scan" title="바코드 스캔" aria-label="바코드 스캔">📷</button>
-      <button class="ib" data-act="clear" title="항목 비우기" aria-label="항목 비우기">⌫</button>
-      <button class="ib" data-act="delcol" title="열 삭제" aria-label="열 삭제">🗑</button>
+      <span class="chip">${L}</span>
+      <input data-act="name" value="${esc(c.name)}" placeholder="${termName()} 입력" enterkeyhint="done">
+      <button class="icb" data-act="scan" title="바코드 스캔" aria-label="바코드 스캔">${IC('scan')}</button>
+      <button class="icb" data-act="photoscan" title="사진으로 스캔·저장" aria-label="사진 스캔">${IC('cam')}</button>
     </div>
-    <div class="meta"><span>총 <b class="cnt">${c.items.length}</b>개 항목</span><button class="ul" data-act="undolast">마지막 취소</button></div>
+    <div class="meta"><span class="big"><b class="cnt">${c.items.length}</b>개</span><span class="mb"><button class="ul" data-act="undolast">마지막 취소</button><button class="ul" data-act="clear">비우기</button><button class="ul" data-act="delcol">열 삭제</button></span></div>
     <div class="add"><input data-act="add" placeholder="스캔 또는 입력 후 Enter" enterkeyhint="done" autocomplete="off" autocapitalize="off" spellcheck="false"><button data-act="addbtn">추가</button></div>
     <div class="list">${listHTML(c)}</div>
   </section>`}
-const VER='v6';
+const VER='Developed by CWH | 레드서비스';
 function updateSum(){const t=cols.reduce((a,c)=>a+c.items.length,0);$('#sum').textContent=`${cols.length}개 열 · 총 ${t}개 항목 · 자동 저장됨 · ${VER}`}
-function renderAll(){app.innerHTML=cols.map(colHTML).join('')+'<button class="addcol" data-act="addcol">＋ 기관 열 추가</button>';updateSum()}
+function renderAll(){app.innerHTML=cols.map(colHTML).join('')+`<button class="addcol" data-act="addcol">${IC('plus')}${esc(CFG.term)} 열 추가</button>`;updateSum()}
 function renderCol(id,focusAdd){
   const c=cols.find(x=>x.id===id),old=app.querySelector(`[data-id="${id}"]`);
   if(!c||!old)return renderAll();
@@ -172,11 +216,11 @@ function addMany(id,raw){
   const c=cols.find(x=>x.id===id);if(!c)return;
   const list=raw.split(/\r?\n|\t/).map(s=>s.trim()).filter(Boolean);if(!list.length)return;
   const S=setOf(c);let added=0,dup=0;
-  for(const t of list){if(S.has(t))dup++;else{S.add(t);c.items.push(t);added++}}
+  for(const t of list){if(CFG.dedupe&&S.has(t))dup++;else{S.add(t);c.items.push(t);added++}}
   if(added===1&&list.length===1){
     const sec=app.querySelector(`[data-id="${id}"]`),lst=sec.querySelector('.list'),i=c.items.length-1;
     if(lst.firstElementChild&&lst.firstElementChild.classList.contains('empty'))lst.innerHTML='';
-    lst.insertAdjacentHTML('afterbegin',rowHTML(i,c.items[i],true));
+    lst.insertAdjacentHTML('afterbegin',rowHTML(i,c.items[i],true,id));
     lst.scrollTop=0;sec.querySelector('.cnt').textContent=c.items.length;updateSum();
   }else if(added)renderCol(id,true);
   if(added)persist();
@@ -189,6 +233,8 @@ app.addEventListener('click',e=>{
   const a=b.dataset.act,sec=b.closest('.col'),id=sec&&sec.dataset.id,c=cols.find(x=>x.id===id),i=+b.dataset.i;
   if(a==='addcol'){if(cols.length>=MAX)return toast(`최대 ${MAX}개 열까지 가능해요`);cols.push({id:uid(),name:'',items:[]});persist();renderAll();window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})}
   else if(a==='scan'){ openScan(id); }
+  else if(a==='photoscan'){photoCol=id;$('#fPhoto').click()}
+  else if(a==='photo'){showPhoto(id,c.items[i])}
   else if(a==='delcol'){if(cols.length<=1)return toast('최소 1개 열은 필요해요');snap();cols=cols.filter(x=>x.id!==id);sets.delete(id);persist();renderAll();toast('열을 삭제했어요',true)}
   else if(a==='clear'){if(!c.items.length)return;snap();c.items=[];sets.delete(id);persist();renderCol(id);toast('항목을 비웠어요',true)}
   else if(a==='del'){snap();c.items.splice(i,1);sets.delete(id);persist();renderCol(id);toast('삭제했어요',true)}
@@ -218,9 +264,11 @@ app.addEventListener('focusout',e=>{
 
 /* ---------- 데이터 → 표 ---------- */
 function table(){
-  const heads=cols.map(c=>c.name.trim()||'기관명');
-  const sorted=cols.map(c=>sortKo(c.items)),n=Math.max(0,...sorted.map(a=>a.length)),rows=[];
-  for(let r=0;r<n;r++)rows.push(sorted.map(a=>a[r]||''));
+  const heads=cols.map(c=>c.name.trim()||termName());
+  const srt=a=>CFG.sort==='asc'?sortKo(a):CFG.sort==='desc'?sortKo(a).reverse():a;
+  const sorted=cols.map(c=>srt(c.items));let n=0;for(const a of sorted)if(a.length>n)n=a.length;
+  const rows=[];for(let r=0;r<n;r++)rows.push(sorted.map(a=>a[r]||''));
+  if(CFG.seq){heads.unshift('순번');rows.forEach((r,k)=>r.unshift(String(k+1)))}
   return {heads,rows};
 }
 const tsv=()=>{const {heads,rows}=table();return [heads,...rows].map(r=>r.join('\t')).join('\n')};
@@ -248,36 +296,41 @@ function zip(files){
   return new Blob([...parts,...cen,new Uint8Array(e.buffer)],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
 }
 function xlsx(){
-  const {heads,rows}=table(),X=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  const L=i=>String.fromCharCode(65+i);
-  const cell=(v,r,i,s)=>v===''?'':`<c r="${L(i)}${r}" t="inlineStr"${s?` s="${s}"`:''}><is><t>${X(v)}</t></is></c>`;
-  const width=heads.map((h,i)=>{const m=Math.max(h.length*1.3,...cols[i].items.map(t=>t.length));return Math.min(50,Math.max(12,m+4))});
-  const sheet=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>${width.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('')}</cols><sheetData><row r="1">${heads.map((h,i)=>cell(h,1,i,1)).join('')}</row>${rows.map((r,k)=>`<row r="${k+2}">${r.map((v,i)=>cell(v,k+2,i,2)).join('')}</row>`).join('')}</sheetData></worksheet>`;
-  const H='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+  const {heads,rows}=table(),X=v=>String(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const L=i=>String.fromCharCode(65+i),H='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+  // 스타일: 1=제목(굵은 테두리·진한 배경) 2=데이터(얇은 테두리) 3=데이터 줄무늬. 빈 칸도 테두리를 그려 표가 깔끔하게 닫힘
+  const cell=(v,r,i,st)=>v===''?`<c r="${L(i)}${r}" s="${st}"/>`:`<c r="${L(i)}${r}" t="inlineStr" s="${st}"><is><t>${X(v)}</t></is></c>`;
+  const width=heads.map((h,i)=>{let m=h.length*1.6;for(const r of rows){const l=String(r[i]).length;if(l>m)m=l}return Math.min(50,Math.max(14,m+4))});
+  const body=rows.map((r,k)=>`<row r="${k+2}">${r.map((v,i)=>cell(v,k+2,i,k%2?3:2)).join('')}</row>`).join('');
+  const nm=((CFG.term||'항목').replace(/[\[\]:*?\/\\]/g,'').slice(0,20)||'항목')+'별 목록';
+  const sheet=H+`<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0" showGridLines="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>${width.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('')}</cols><sheetData><row r="1" ht="28" customHeight="1">${heads.map((h,i)=>cell(h,1,i,1)).join('')}</row>${body}</sheetData></worksheet>`;
+  const bd=(st,c)=>['left','right','top','bottom'].map(k=>`<${k} style="${st}"><color rgb="${c}"/></${k}>`).join('')+'<diagonal/>';
+  const al='<alignment horizontal="center" vertical="center"/>';
+  const styles=H+`<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Malgun Gothic"/></font><font><b/><sz val="12"/><color rgb="FFFFFFFF"/><name val="Malgun Gothic"/></font></fonts><fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF1F2937"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFF1F5F9"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="3"><border><left/><right/><top/><bottom/><diagonal/></border><border>${bd('thin','FF475569')}</border><border>${bd('medium','FF0F172A')}</border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="4"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="49" fontId="1" fillId="2" borderId="2" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1">${al}</xf><xf numFmtId="49" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1">${al}</xf><xf numFmtId="49" fontId="0" fillId="3" borderId="1" xfId="0" applyNumberFormat="1" applyFill="1" applyBorder="1" applyAlignment="1">${al}</xf></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
   return zip({
     '[Content_Types].xml':H+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>',
     '_rels/.rels':H+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>',
-    'xl/workbook.xml':H+'<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="기관별 목록" sheetId="1" r:id="rId1"/></sheets></workbook>',
+    'xl/workbook.xml':H+`<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="${X(nm)}" sheetId="1" r:id="rId1"/></sheets></workbook>`,
     'xl/_rels/workbook.xml.rels':H+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>',
-    'xl/styles.xml':H+'<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Malgun Gothic"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Malgun Gothic"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF3A5BFF"/></patternFill></fill></fills><borders count="3"><border/><border><left style="thin"><color rgb="FF9AA0BB"/></left><right style="thin"><color rgb="FF9AA0BB"/></right><top style="thin"><color rgb="FF9AA0BB"/></top><bottom style="thin"><color rgb="FF9AA0BB"/></bottom></border><border><left style="medium"><color rgb="FF1F2A66"/></left><right style="medium"><color rgb="FF1F2A66"/></right><top style="medium"><color rgb="FF1F2A66"/></top><bottom style="medium"><color rgb="FF1F2A66"/></bottom></border></borders><cellStyleXfs count="1"><xf/></cellStyleXfs><cellXfs count="3"><xf/><xf fontId="1" fillId="2" borderId="2" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf borderId="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf></cellXfs></styleSheet>',
+    'xl/styles.xml':styles,
     'xl/worksheets/sheet1.xml':sheet
   });
 }
 
 /* ---------- 내보내기 (브라우저 / PWA / Capacitor / 커스텀 WebView 브리지) ---------- */
 function build(){
-  const {heads,rows}=table();
-  if(!rows.length&&heads.every(h=>h==='기관명')){toast('내보낼 데이터가 없어요');return null}
-  return {blob:xlsx(),name:`기관별목록_${stamp()}.xlsx`};
+  const {rows}=table();
+  if(!rows.length){toast('내보낼 데이터가 없어요');return null}
+  return {blob:xlsx(),name:`${(CFG.prefix||'LabelScan').replace(/[\\/:*?"<>|]/g,'')}_${stamp()}.xlsx`};
 }
 const b64=blob=>new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.readAsDataURL(blob)});
 async function shareText(){
-  try{await navigator.share({title:'기관별 목록',text:tsv()})}
+  try{await navigator.share({title:'Label scan',text:tsv()})}
   catch(e){if(e&&e.name!=='AbortError')toast(`텍스트 공유도 실패(${e.name}) → "복사"를 이용해 주세요`)}
 }
 async function share(){
   const f=build();if(!f)return;
-  const T='기관별 목록';
+  const T='Label scan';
   try{
     const cap=window.Capacitor&&window.Capacitor.Plugins;
     if(cap&&cap.Filesystem&&cap.Share){            // Capacitor APK
@@ -346,17 +399,15 @@ function openWebScan(colId){
       { facingMode: 'environment' },
       {
         fps: 15,
-        // 막대 바코드는 가로로 넓은 영역이 필요 → 화면 폭의 90% × 높이의 45%
-        qrbox: (w,h)=>({width:Math.floor(w*0.95),height:Math.floor(Math.min(h*0.6,w*0.7))}),
-        // 해상도를 높여야 얇은 막대도 읽힘 (기본값은 낮은 해상도)
-        videoConstraints:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}}
+        // 인식 영역(qrbox)을 지정하지 않으면 영상 전체를 해독 → 화면과 인식 위치가 어긋날 일이 없음
+        videoConstraints:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}
       },
       onScanSuccess,
       ()=>{frames++;if(frames%10===0){const f=document.getElementById('scanFrames');if(f)f.textContent='해독 시도 '+frames+'회 (숫자가 오르면 카메라는 정상 동작 중)'}}
     );
   }).then(()=>{
     try{html5Qr.applyVideoConstraints({advanced:[{focusMode:'continuous'}]}).catch(()=>{})}catch(e){}
-    document.getElementById('scanStatus').textContent = '바코드를 가로로 맞추고 10~20cm 거리에서 비춰 주세요 (연속 스캔)';
+    document.getElementById('scanStatus').textContent = '화면 안에 바코드를 비추면 자동 입력돼요 (10~20cm, 연속 스캔)';
   }).catch(e=>{
     document.getElementById('scanStatus').textContent = camMsg(e);
   });
@@ -401,8 +452,11 @@ function onScanSuccess(decodedText){
   if(prev && now - prev < 1500) return;
   const c = cols.find(x=>x.id===scanColId);
   if(!c) return;
-  const dup = setOf(c).has(decodedText);
-  addMany(scanColId, decodedText);      // 입력 순서 유지 · 새 줄만 추가 · 소리/진동/저장 처리
+  const dup = CFG.dedupe && setOf(c).has(decodedText);
+  addMany(scanColId, decodedText);
+  if(CFG.photo && !nativeOn) snapVideo(scanColId, decodedText);
+  if(CFG.once && !dup) setTimeout(closeScan, 350);
+  // 입력 순서 유지 · 새 줄만 추가 · 소리/진동/저장 처리
   const msg = (dup?`중복됨: ${decodedText}`:`추가됨: ${decodedText}`) + ` · 총 ${c.items.length}개`;
   document.getElementById('scanStatus').textContent = msg;
   const n = document.getElementById('nStatus'); if(n) n.textContent = msg;
@@ -419,7 +473,7 @@ async function openNative(colId,B){
   scanColId=colId; seen.clear();
   const col=cols.find(x=>x.id===colId);
   document.getElementById('nTitle').textContent=(col&&col.name?col.name:'선택 열')+' - 스캔 [고속 스캐너]';
-  document.getElementById('nStatus').textContent='바코드를 비추세요 (연속 스캔)';
+  document.getElementById('nStatus').textContent='화면 안에 바코드를 비추세요 (연속 스캔)';
   const p=await B.requestPermissions();
   if(p.camera!=='granted')throw new Error('권한');
   document.documentElement.classList.add('scan');
@@ -447,7 +501,91 @@ document.getElementById('scanSheet').addEventListener('click', e=>{ if(e.target.
 
 /* 기존 renderAll 이후 */
 
-renderAll();updSnd();
+
+
+/* ---------- 사진 저장 (IndexedDB) ---------- */
+let photoCol=null,phUrl=null,phKey=null;
+const DB={open(){return this.p||(this.p=new Promise((res,rej)=>{const r=indexedDB.open('labelscan',1);r.onupgradeneeded=()=>r.result.createObjectStore('ph');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}))},
+  async run(mode,fn){const d=await this.open();return new Promise((res,rej)=>{const t=d.transaction('ph',mode),rq=fn(t.objectStore('ph'));t.oncomplete=()=>res(rq&&rq.result);t.onerror=()=>rej(t.error)})},
+  set(k,v){return this.run('readwrite',o=>o.put(v,k))},get(k){return this.run('readonly',o=>o.get(k))},del(k){return this.run('readwrite',o=>o.delete(k))},keys(){return this.run('readonly',o=>o.getAllKeys())}};
+function loadPhotos(){DB.keys().then(ks=>{(ks||[]).forEach(k=>photos.add(k));if(photos.size)renderAll()}).catch(()=>{})}
+const FMTS=()=>{const F=window.Html5QrcodeSupportedFormats||{};return ['QR_CODE','CODE_93','CODE_128','CODE_39','EAN_13','EAN_8','UPC_A','UPC_E','ITF','CODABAR','DATA_MATRIX'].map(k=>F[k]).filter(x=>x!==undefined)};
+function markPhoto(cid,text){
+  photos.add(cid+'|'+text);
+  const sec=app.querySelector(`[data-id="${cid}"]`);if(!sec)return;let n=0;
+  for(const r of sec.querySelectorAll('.row')){if(n++>8)break;const t=r.querySelector('.t');if(t&&t.textContent===text&&!r.querySelector('.ph')){r.querySelector('.x:last-child').insertAdjacentHTML('beforebegin',PH(+t.dataset.i));break}}
+}
+async function savePhoto(cid,text,blob){try{await DB.set(cid+'|'+text,blob);markPhoto(cid,text)}catch(e){toast('사진 저장에 실패했어요')}}
+function snapVideo(cid,text){
+  const v=document.querySelector('#reader video');if(!v||!v.videoWidth)return;
+  const k=Math.min(1,1280/Math.max(v.videoWidth,v.videoHeight)),c=document.createElement('canvas');
+  c.width=Math.round(v.videoWidth*k);c.height=Math.round(v.videoHeight*k);c.getContext('2d').drawImage(v,0,0,c.width,c.height);
+  c.toBlob(b=>b&&savePhoto(cid,text,b),'image/jpeg',.8);
+}
+async function shrink(file,max){
+  const bmp=await createImageBitmap(file),k=Math.min(1,max/Math.max(bmp.width,bmp.height)),c=document.createElement('canvas');
+  c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);
+  return new Promise(r=>c.toBlob(b=>r(new File([b],'p.jpg',{type:'image/jpeg'})),'image/jpeg',.82));
+}
+$('#fPhoto').onchange=async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f||!photoCol)return;
+  toast('사진에서 바코드를 읽는 중...');
+  try{
+    const small=await shrink(f,1600);await loadScanner();
+    const el=document.createElement('div');el.id='tmpR';el.style.display='none';document.body.appendChild(el);
+    let text=null;
+    try{const q=new Html5Qrcode('tmpR',{formatsToSupport:FMTS(),verbose:false});const r=await q.scanFileV2(small,false);text=r&&r.decodedText}catch(_){}
+    el.remove();
+    if(!text)return toast('바코드를 못 읽었어요. 더 가까이서 또렷하게 다시 찍어 주세요');
+    addMany(photoCol,text);
+    if(CFG.photo)await savePhoto(photoCol,text,small);
+  }catch(err){toast('사진 처리에 실패했어요')}
+};
+async function showPhoto(cid,text){
+  const b=await DB.get(cid+'|'+text);if(!b){photos.delete(cid+'|'+text);return toast('저장된 사진이 없어요')}
+  phKey=cid+'|'+text;if(phUrl)URL.revokeObjectURL(phUrl);phUrl=URL.createObjectURL(b);
+  $('#phImg').src=phUrl;$('#phCap').textContent=text;$('#phSheet').classList.add('on');
+}
+async function sendFile(blob,name){
+  try{
+    const cap=window.Capacitor&&window.Capacitor.Plugins;
+    if(cap&&cap.Filesystem&&cap.Share){const r=await cap.Filesystem.writeFile({path:name,data:await b64(blob),directory:'CACHE'});await cap.Share.share({title:'Label scan',url:r.uri});return}
+    const f=new File([blob],name,{type:blob.type});
+    if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f]});return}
+  }catch(e){if(e&&e.name==='AbortError')return}
+  const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),3000);
+}
+$('#phShare').onclick=async()=>{const b=await DB.get(phKey);if(b)sendFile(b,phKey.split('|')[1].replace(/[^\w.-]/g,'_')+'.jpg')};
+$('#phDel').onclick=async()=>{await DB.del(phKey);photos.delete(phKey);$('#phSheet').classList.remove('on');renderCol(phKey.split('|')[0]);toast('사진을 삭제했어요')};
+$('#phClose').onclick=()=>$('#phSheet').classList.remove('on');
+
+/* ---------- 설정 ---------- */
+const OPTS=[
+  ['text','term','항목 이름 (엑셀 1행 제목에 사용)',['기관','제품','품목','창고','고객','분류','부품']],
+  ['sel','sort','엑셀 정렬',[['asc','오름차순'],['desc','내림차순'],['none','입력 순서 그대로']]],
+  ['chk','dedupe','중복 항목 제외'],
+  ['chk','seq','엑셀에 순번 열 추가'],
+  ['text','prefix','엑셀 파일 이름'],
+  ['chk','snd','스캔 소리'],['chk','vib','스캔 진동'],
+  ['chk','once','스캔 1회 후 카메라 자동 닫기'],
+  ['chk','photo','스캔 사진 저장 (일반 카메라·사진 스캔)']
+];
+function openSet(){
+  $('#setBody').innerHTML=OPTS.map(([t,k,l,x])=>t==='chk'?`<label class="opt"><span>${l}</span><input type="checkbox" data-k="${k}"${CFG[k]?' checked':''}></label>`
+    :t==='sel'?`<label class="opt"><span>${l}</span><select data-k="${k}">${x.map(([v,n])=>`<option value="${v}"${CFG[k]===v?' selected':''}>${n}</option>`).join('')}</select></label>`
+    :`<label class="opt tx"><span>${l}</span><input type="text" data-k="${k}" value="${esc(CFG[k]||'')}"${x?` list="dl_${k}"`:''} autocomplete="off"></label>${x?`<datalist id="dl_${k}">${x.map(v=>`<option value="${v}">`).join('')}</datalist>`:''}`).join('')
+    +`<p class="hint">고속 스캐너(ML Kit)는 사진 저장을 지원하지 않아요. 사진이 필요하면 카메라 아이콘(사진 스캔)을 쓰세요.<br>Label scan ${VER}</p>`;
+  $('#setSheet').classList.add('on');
+}
+$('#setBody').addEventListener('input',e=>{
+  const k=e.target.dataset.k;if(!k)return;
+  CFG[k]=e.target.type==='checkbox'?e.target.checked:e.target.value;cfgSave();
+  if(k==='term')renderAll();if(k==='dedupe')sets.clear();if(k==='snd'&&CFG.snd)beep(true);
+});
+$('#bSet').onclick=openSet;$('#bSetClose').onclick=()=>$('#setSheet').classList.remove('on');
+$('#setSheet').onclick=e=>{if(e.target.id==='setSheet')e.target.classList.remove('on')};
+$('#phSheet').onclick=e=>{if(e.target.id==='phSheet')e.target.classList.remove('on')};
+renderAll();loadPhotos();
 </script>
 </body>
 </html>
