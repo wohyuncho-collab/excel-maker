@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0F1013">
-<title>Barcode scan</title>
+<title>Barcode Scan</title>
 <style>
 :root{--bg:#F3F3F0;--card:#fff;--line:#E4E3DD;--text:#0F1013;--mute:#6B6F7A;--acc:#F2551B;--acc-s:#FFEFE8;--ink:#0F1013;--on-ink:#fff;--red:#D92D20;--soft:#F6F5F1;--shadow:0 10px 32px rgba(15,16,19,.14);color-scheme:light}
 @media(prefers-color-scheme:dark){:root{--bg:#0A0B0E;--card:#14161B;--line:#262A33;--text:#F4F5F7;--mute:#9AA2B0;--acc:#FF7A45;--acc-s:#2B1D16;--ink:#F4F5F7;--on-ink:#0A0B0E;--red:#FF7A70;--soft:#1B1E25;--shadow:0 10px 32px rgba(0,0,0,.5);color-scheme:dark}}
@@ -17,6 +17,8 @@ header{position:sticky;top:0;z-index:5;display:flex;justify-content:space-betwee
 .brand{display:flex;align-items:center;gap:11px;min-width:0}
 .logo{width:40px;height:40px;border-radius:12px;background:var(--ink);color:var(--on-ink);display:grid;place-items:center;flex:none}
 header h1{font-size:19px;font-weight:800;letter-spacing:-.03em}
+header p.cr{letter-spacing:.01em}
+.sumrow{max-width:1100px;margin:0 auto;padding:2px 18px 2px;font-size:12px;color:var(--mute)}
 header p{font-size:12px;color:var(--mute);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .icb{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;border:1px solid var(--line);background:var(--card);flex:none}
 .icb:active{background:var(--soft)}
@@ -116,9 +118,10 @@ body.barcode-scanner-active #nScan *{visibility:visible}
 <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 3L5 14h6l-1 7 8-11h-6l1-7z"/></symbol>
 </defs></svg>
 <header>
-  <div class="brand"><span class="logo"><svg class="ic"><use href="#i-bars"/></svg></span><div><h1>Barcode scan</h1><p id="sum"></p></div></div>
+  <div class="brand"><span class="logo"><svg class="ic"><use href="#i-bars"/></svg></span><div><h1>Barcode Scan</h1><p class="cr">Developed by CWH | 레드서비스</p></div></div>
   <button id="bSet" class="icb" aria-label="설정"><svg class="ic"><use href="#i-tune"/></svg></button>
 </header>
+<div id="sum" class="sumrow"></div>
 <main id="app"></main>
 <div class="bar">
   <button id="bPrev"><svg class="ic"><use href="#i-eye"/></svg>미리보기</button>
@@ -137,8 +140,9 @@ body.barcode-scanner-active #nScan *{visibility:visible}
 <script>addEventListener("error",function(e){var d=document.createElement("div");d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99;background:#E5484D;color:#fff;padding:8px 12px;font-size:12px";d.textContent="오류: "+e.message+" (줄 "+(e.lineno||"?")+")";document.body.appendChild(d)})</script>
 <script>
 const KEY='inst_excel_v2', SKEY='inst_excel_snd', CKEY='label_scan_cfg', MAX=12;
-const CFG=Object.assign({term:'기관',sort:'asc',dedupe:true,seq:false,prefix:'LabelScan',snd:true,vib:true,once:false,photo:true},(()=>{try{return JSON.parse(localStorage.getItem('label_scan_cfg'))||{}}catch(e){return {}}})());
+const CFG=Object.assign({term:'기관',sort:'asc',dedupe:true,seq:false,prefix:'BarcodeScan',snd:true,vib:true,once:false,photo:true},(()=>{try{return JSON.parse(localStorage.getItem('label_scan_cfg'))||{}}catch(e){return {}}})());
 const photos=new Set();
+if(CFG.prefix==='LabelScan')CFG.prefix='BarcodeScan';
 const IC=n=>`<svg class="ic"><use href="#i-${n}"/></svg>`;
 let cols=load(), sets=new Map(), editing=null, undoSnap=null, tt, saveT, tact=null, ac, snd=true;
 try{snd=localStorage.getItem(SKEY)!=='0'}catch(e){}
@@ -164,7 +168,14 @@ function beep(ok){
       const t=ac.currentTime,seq=ok?[[1400,0,.05]]:[[300,0,.12],[300,.18,.12]];
       for(const [f,d,l] of seq){const o=ac.createOscillator(),g=ac.createGain();o.type='square';o.frequency.value=f;g.gain.value=.08;o.connect(g);g.connect(ac.destination);o.start(t+d);o.stop(t+d+l)}
     }
-    if(CFG.vib&&navigator.vibrate)navigator.vibrate(ok?25:[70,50,70]);
+    if(CFG.vib)vibe(ok);
+  }catch(e){}
+}
+function vibe(ok){
+  try{
+    const H=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Haptics;
+    if(H){H.vibrate({duration:ok?35:80});if(!ok)setTimeout(()=>H.vibrate({duration:80}),170)}
+    else if(navigator.vibrate)navigator.vibrate(ok?35:[80,60,80]);
   }catch(e){}
 }
 const termName=()=>{const t=(CFG.term||'항목').trim()||'항목';return /(명|이름)$/.test(t)?t:t+'명'};
@@ -191,14 +202,14 @@ function colHTML(c){const L=String.fromCharCode(65+cols.indexOf(c)+(CFG.seq?1:0)
       <span class="chip">${L}</span>
       <input data-act="name" value="${esc(c.name)}" placeholder="${termName()} 입력" enterkeyhint="done">
       <button class="icb" data-act="scan" title="바코드 스캔" aria-label="바코드 스캔">${IC('scan')}</button>
-      <button class="icb" data-act="photoscan" title="사진으로 스캔·저장" aria-label="사진 스캔">${IC('cam')}</button>
+      <button class="icb" data-act="photoscan" title="사진 스캔 (인식하면 자동 촬영·저장)" aria-label="사진 스캔">${IC('cam')}</button>
     </div>
     <div class="meta"><span class="big"><b class="cnt">${c.items.length}</b>개</span><span class="mb"><button class="ul" data-act="undolast">마지막 취소</button><button class="ul" data-act="clear">비우기</button><button class="ul" data-act="delcol">열 삭제</button></span></div>
     <div class="add"><input data-act="add" placeholder="스캔 또는 입력 후 Enter" enterkeyhint="done" autocomplete="off" autocapitalize="off" spellcheck="false"><button data-act="addbtn">추가</button></div>
     <div class="list">${listHTML(c)}</div>
   </section>`}
-const VER='Developed by CWH | 레드서비스';
-function updateSum(){const t=cols.reduce((a,c)=>a+c.items.length,0);$('#sum').textContent=`${cols.length}개 열 · 총 ${t}개 항목 · 자동 저장됨 · ${VER}`}
+const VER='v9';
+function updateSum(){const t=cols.reduce((a,c)=>a+c.items.length,0);$('#sum').textContent=`${cols.length}개 열 · 총 ${t}개 항목 · 자동 저장됨`}
 function renderAll(){app.innerHTML=cols.map(colHTML).join('')+`<button class="addcol" data-act="addcol">${IC('plus')}${esc(CFG.term)} 열 추가</button>`;updateSum()}
 function renderCol(id,focusAdd){
   const c=cols.find(x=>x.id===id),old=app.querySelector(`[data-id="${id}"]`);
@@ -233,7 +244,7 @@ app.addEventListener('click',e=>{
   const a=b.dataset.act,sec=b.closest('.col'),id=sec&&sec.dataset.id,c=cols.find(x=>x.id===id),i=+b.dataset.i;
   if(a==='addcol'){if(cols.length>=MAX)return toast(`최대 ${MAX}개 열까지 가능해요`);cols.push({id:uid(),name:'',items:[]});persist();renderAll();window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})}
   else if(a==='scan'){ openScan(id); }
-  else if(a==='photoscan'){photoCol=id;$('#fPhoto').click()}
+  else if(a==='photoscan'){forcePhoto=true;openWebScan(id)}
   else if(a==='photo'){showPhoto(id,c.items[i])}
   else if(a==='delcol'){if(cols.length<=1)return toast('최소 1개 열은 필요해요');snap();cols=cols.filter(x=>x.id!==id);sets.delete(id);persist();renderAll();toast('열을 삭제했어요',true)}
   else if(a==='clear'){if(!c.items.length)return;snap();c.items=[];sets.delete(id);persist();renderCol(id);toast('항목을 비웠어요',true)}
@@ -321,16 +332,16 @@ function xlsx(){
 function build(){
   const {rows}=table();
   if(!rows.length){toast('내보낼 데이터가 없어요');return null}
-  return {blob:xlsx(),name:`${(CFG.prefix||'LabelScan').replace(/[\\/:*?"<>|]/g,'')}_${stamp()}.xlsx`};
+  return {blob:xlsx(),name:`${(CFG.prefix||'BarcodeScan').replace(/[\\/:*?"<>|]/g,'')}_${stamp()}.xlsx`};
 }
 const b64=blob=>new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.readAsDataURL(blob)});
 async function shareText(){
-  try{await navigator.share({title:'Label scan',text:tsv()})}
+  try{await navigator.share({title:'Barcode Scan',text:tsv()})}
   catch(e){if(e&&e.name!=='AbortError')toast(`텍스트 공유도 실패(${e.name}) → "복사"를 이용해 주세요`)}
 }
 async function share(){
   const f=build();if(!f)return;
-  const T='Label scan';
+  const T='Barcode Scan';
   try{
     const cap=window.Capacitor&&window.Capacitor.Plugins;
     if(cap&&cap.Filesystem&&cap.Share){            // Capacitor APK
@@ -384,7 +395,7 @@ function openWebScan(colId){
   if(!document.getElementById('scanFrames'))document.getElementById('scanStatus').insertAdjacentHTML('afterend','<div id="scanFrames" style="font-size:11px;color:var(--mute);padding:2px 0"></div>');
   scanColId = colId; seen.clear();
   const col = cols.find(x=>x.id===colId);
-  document.getElementById('scanTitle').textContent = (col&&col.name?col.name:'선택 열') + ' - 바코드 스캔 [일반 카메라]';
+  document.getElementById('scanTitle').textContent = (col&&col.name?col.name:'선택 열') + (forcePhoto?' - 사진 스캔 [자동 저장]':' - 바코드 스캔 [일반 카메라]');
   document.getElementById('scanSheet').classList.add('on');
   document.getElementById('scanStatus').textContent = '카메라 시작 중...';
   loadScanner().then(camCheck).then(()=>{
@@ -454,7 +465,7 @@ function onScanSuccess(decodedText){
   if(!c) return;
   const dup = CFG.dedupe && setOf(c).has(decodedText);
   addMany(scanColId, decodedText);
-  if(CFG.photo && !nativeOn) snapVideo(scanColId, decodedText);
+  if((CFG.photo||forcePhoto) && !nativeOn) snapVideo(scanColId, decodedText);
   if(CFG.once && !dup) setTimeout(closeScan, 350);
   // 입력 순서 유지 · 새 줄만 추가 · 소리/진동/저장 처리
   const msg = (dup?`중복됨: ${decodedText}`:`추가됨: ${decodedText}`) + ` · 총 ${c.items.length}개`;
@@ -464,7 +475,9 @@ function onScanSuccess(decodedText){
 /* ===== 네이티브(구글 ML Kit) 스캐너: APK에서만 사용, 실패하면 일반 카메라로 자동 전환 ===== */
 const NS=()=>window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.BarcodeScanner;
 let nativeOn=false,nativeHandle=null;
+let forcePhoto=false;
 function openScan(colId){
+  forcePhoto=false;
   const B=NS();
   if(!B)return openWebScan(colId);
   openNative(colId,B).catch(()=>{closeNative().finally(()=>{toast('고속 스캐너를 못 켜서 일반 카메라로 전환해요');openWebScan(colId)})});
@@ -549,7 +562,7 @@ async function showPhoto(cid,text){
 async function sendFile(blob,name){
   try{
     const cap=window.Capacitor&&window.Capacitor.Plugins;
-    if(cap&&cap.Filesystem&&cap.Share){const r=await cap.Filesystem.writeFile({path:name,data:await b64(blob),directory:'CACHE'});await cap.Share.share({title:'Label scan',url:r.uri});return}
+    if(cap&&cap.Filesystem&&cap.Share){const r=await cap.Filesystem.writeFile({path:name,data:await b64(blob),directory:'CACHE'});await cap.Share.share({title:'Barcode Scan',url:r.uri});return}
     const f=new File([blob],name,{type:blob.type});
     if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f]});return}
   }catch(e){if(e&&e.name==='AbortError')return}
@@ -574,13 +587,13 @@ function openSet(){
   $('#setBody').innerHTML=OPTS.map(([t,k,l,x])=>t==='chk'?`<label class="opt"><span>${l}</span><input type="checkbox" data-k="${k}"${CFG[k]?' checked':''}></label>`
     :t==='sel'?`<label class="opt"><span>${l}</span><select data-k="${k}">${x.map(([v,n])=>`<option value="${v}"${CFG[k]===v?' selected':''}>${n}</option>`).join('')}</select></label>`
     :`<label class="opt tx"><span>${l}</span><input type="text" data-k="${k}" value="${esc(CFG[k]||'')}"${x?` list="dl_${k}"`:''} autocomplete="off"></label>${x?`<datalist id="dl_${k}">${x.map(v=>`<option value="${v}">`).join('')}</datalist>`:''}`).join('')
-    +`<p class="hint">고속 스캐너(ML Kit)는 사진 저장을 지원하지 않아요. 사진이 필요하면 카메라 아이콘(사진 스캔)을 쓰세요.<br>Label scan ${VER}</p>`;
+    +`<p class="hint">고속 스캐너(ML Kit)는 사진 저장을 지원하지 않아요. 사진이 필요하면 카메라 아이콘(사진 스캔)을 쓰세요.<br>Barcode Scan · Developed by CWH | 레드서비스</p>`;
   $('#setSheet').classList.add('on');
 }
 $('#setBody').addEventListener('input',e=>{
   const k=e.target.dataset.k;if(!k)return;
   CFG[k]=e.target.type==='checkbox'?e.target.checked:e.target.value;cfgSave();
-  if(k==='term')renderAll();if(k==='dedupe')sets.clear();if(k==='snd'&&CFG.snd)beep(true);
+  if(k==='term')renderAll();if(k==='dedupe')sets.clear();if(k==='snd'&&CFG.snd)beep(true);if(k==='vib'&&CFG.vib)vibe(true);
 });
 $('#bSet').onclick=openSet;$('#bSetClose').onclick=()=>$('#setSheet').classList.remove('on');
 $('#setSheet').onclick=e=>{if(e.target.id==='setSheet')e.target.classList.remove('on')};
