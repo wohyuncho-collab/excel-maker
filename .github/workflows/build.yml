@@ -21,9 +21,9 @@ jobs:
         run: |
           cp node_modules/html5-qrcode/html5-qrcode.min.js www/
           ls -l www
-      - name: 앱 이름을 Barcode Scan으로
+      - name: 앱 이름을 Barcode Scan PRO으로
         run: |
-          sed -i 's/"appName": *"[^"]*"/"appName": "Barcode Scan"/' capacitor.config.json
+          sed -i 's/"appName": *"[^"]*"/"appName": "Barcode Scan PRO"/' capacitor.config.json
           cat capacitor.config.json
       - run: npx cap add android
       - run: cp -r icons/. android/app/src/main/res/
@@ -31,22 +31,30 @@ jobs:
         run: |
           sed -i 's#<application#<uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.VIBRATE" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />\n    <application#' android/app/src/main/AndroidManifest.xml
           grep -n -E "CAMERA|VIBRATE" android/app/src/main/AndroidManifest.xml
-      - name: 고속 스캐너(구글 ML Kit) 포함해서 빌드
-        id: full
+      - name: 1단계 - 전체 기능 빌드 (고속 스캐너·햅틱·세로 고정·화면 유지)
+        id: s1
         continue-on-error: true
         run: |
-          npm install @capacitor-mlkit/barcode-scanning@6 @capacitor/haptics@6
+          npm install @capacitor-mlkit/barcode-scanning@6 @capacitor/haptics@6 @capacitor/screen-orientation@6 @capacitor-community/keep-awake@5.0.1
           npx cap sync android
           cd android && chmod +x gradlew && ./gradlew assembleDebug
-      - name: 실패하면 기본 스캐너만으로 다시 빌드
-        if: steps.full.outcome == 'failure'
+      - name: 2단계 - 고속 스캐너 제외하고 다시 빌드
+        id: s2
+        if: steps.s1.outcome == 'failure'
+        continue-on-error: true
         run: |
           npm uninstall @capacitor-mlkit/barcode-scanning
           npx cap sync android
           cd android && chmod +x gradlew && ./gradlew clean assembleDebug
+      - name: 3단계 - 기본 기능만으로 다시 빌드
+        if: steps.s2.outcome == 'failure'
+        run: |
+          npm uninstall @capacitor/haptics @capacitor/screen-orientation @capacitor-community/keep-awake
+          npx cap sync android
+          cd android && chmod +x gradlew && ./gradlew clean assembleDebug
       - name: APK 이름 바꾸기
-        run: mv android/app/build/outputs/apk/debug/app-debug.apk android/app/build/outputs/apk/debug/barcode_cam.apk
+        run: mv android/app/build/outputs/apk/debug/app-debug.apk android/app/build/outputs/apk/debug/Barcode_Scan_PRO.apk
       - uses: actions/upload-artifact@v4
         with:
           name: barcode-cam-apk
-          path: android/app/build/outputs/apk/debug/barcode_cam.apk
+          path: android/app/build/outputs/apk/debug/Barcode_Scan_PRO.apk
