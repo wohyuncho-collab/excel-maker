@@ -141,10 +141,102 @@ body.barcode-scanner-active #nScan *{visibility:visible}
 <script>addEventListener("error",function(e){var d=document.createElement("div");d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99;background:#E5484D;color:#fff;padding:8px 12px;font-size:12px";d.textContent="오류: "+e.message+" (줄 "+(e.lineno||"?")+")";document.body.appendChild(d)})</script>
 <script>
 const KEY='inst_excel_v2', SKEY='inst_excel_snd', CKEY='label_scan_cfg', MAX=12;
-const CFG=Object.assign({term:'기관',sort:'asc',dedupe:true,seq:false,prefix:'BarcodeScan',snd:true,vib:true,once:false,photo:true,gap:'1500',zoom:'2',res:'1280',torch:false},(()=>{try{return JSON.parse(localStorage.getItem('label_scan_cfg'))||{}}catch(e){return {}}})());
+const CFG=Object.assign({term:'기관',sort:'asc',dedupe:true,seq:false,prefix:'BarcodeScan',snd:true,vib:true,once:false,photo:true,gap:'1500',zoom:'2',res:'1280',torch:false,fmt:'std',lang:'ko',awake:true,portrait:false},(()=>{try{return JSON.parse(localStorage.getItem('label_scan_cfg'))||{}}catch(e){return {}}})());
 const photos=new Set();
 if(CFG.prefix==='LabelScan')CFG.prefix='BarcodeScan';
 const IC=n=>`<svg class="ic"><use href="#i-${n}"/></svg>`;
+/* ---------- 언어 (한국어 · English · 日本語 · 中文) ---------- */
+const LANG=CFG.lang||'ko',LI={en:0,ja:1,zh:2};
+const T0={ko:'기관',en:'Organization',ja:'機関',zh:'机构'};
+const TERMS={ko:['기관','제품','품목','창고','고객','분류','부품'],en:['Organization','Product','Item','Warehouse','Customer','Category','Part'],ja:['機関','製品','品目','倉庫','顧客','分類','部品'],zh:['机构','产品','品目','仓库','客户','分类','部件']};
+const D=new Map([
+["설정","Settings","設定","设置"],["미리보기","Preview","プレビュー","预览"],["복사","Copy","コピー","复制"],["저장","Save","保存","保存"],["공유","Share","共有","分享"],
+["되돌리기","Undo","元に戻す","撤销"],["되돌렸어요","Restored","元に戻しました","已撤销"],["엑셀 미리보기","Excel preview","Excelプレビュー","Excel 预览"],["닫기","Close","閉じる","关闭"],["완료","Done","完了","完成"],
+["공유 · 저장","Share · Save","共有・保存","分享 · 保存"],["삭제","Delete","削除","删除"],["조명","Light","ライト","补光"],["바코드 스캔","Barcode scan","バーコードスキャン","扫描条码"],
+["바코드를 카메라에 가져가면 자동으로 입력됩니다 · 연속 스캔 가능","Hold a barcode up to the camera and it is entered automatically · continuous scanning","バーコードをカメラにかざすと自動で入力されます · 連続スキャン可能","将条码对准相机即可自动录入 · 支持连续扫描"],
+["Developed by CWH | 레드서비스","Developed by CWH | RED service","Developed by CWH | RED service","Developed by CWH | RED service"],
+["사진 보기","View photo","写真を見る","查看照片"],["스캔하거나 입력하면 여기에 쌓여요","Scanned or typed items pile up here","スキャン・入力した項目がここに積まれます","扫描或输入的项目会显示在这里"],
+["(최신 항목이 맨 위)","(newest on top)","（最新が一番上）","（最新的在最上面）"],
+["사진 스캔 (인식하면 자동 촬영·저장)","Photo scan (auto-capture and save on detection)","写真スキャン（認識すると自動で撮影・保存）","拍照扫描（识别后自动拍照并保存）"],
+["사진 스캔","Photo scan","写真スキャン","拍照扫描"],["개","items","件","项"],["마지막 취소","Undo last","直前を取消","撤销上一个"],["비우기","Clear","クリア","清空"],["열 삭제","Delete column","列を削除","删除列"],
+["스캔 또는 입력 후 Enter","Scan or type, then press Enter","スキャンまたは入力してEnter","扫描或输入后按回车"],["추가","Add","追加","添加"],
+["열을 삭제했어요","Column deleted","列を削除しました","已删除列"],["항목을 비웠어요","Items cleared","項目をクリアしました","已清空项目"],["삭제했어요","Deleted","削除しました","已删除"],
+["최소 1개 열은 필요해요","At least 1 column is required","最低1列は必要です","至少需要1列"],["취소할 항목이 없어요","Nothing to undo","取り消す項目がありません","没有可撤销的项目"],
+["빈 값이라 삭제했어요","Empty value, so it was deleted","空欄のため削除しました","内容为空，已删除"],["중복이라 수정하지 않았어요","Duplicate, so it was not changed","重複のため変更しませんでした","重复，未修改"],
+["내보낼 데이터가 없어요","No data to export","出力するデータがありません","没有可导出的数据"],["텍스트로 공유","Share as text","テキストで共有","以文本分享"],
+["파일 공유가 안 돼 텍스트로 공유했어요","File sharing is unavailable, shared as text instead","ファイル共有できないためテキストで共有しました","无法分享文件，已改为文本分享"],
+["파일로 저장","Save as file","ファイルで保存","保存为文件"],["엑셀 파일을 저장했어요","Excel file saved","Excelファイルを保存しました","已保存 Excel 文件"],
+["복사할 데이터가 없어요","No data to copy","コピーするデータがありません","没有可复制的数据"],["표를 복사했어요 (엑셀·메신저에 붙여넣기)","Table copied (paste into Excel or a messenger)","表をコピーしました（Excelやメッセンジャーに貼り付け）","已复制表格（可粘贴到 Excel 或聊天软件）"],
+["항목이 없어요","No items","項目がありません","没有项目"],["줌 적용 실패 · ","Zoom failed · ","ズーム失敗 · ","缩放失败 · "],["이 카메라는 줌 미지원 · ","Zoom not supported · ","ズーム非対応 · ","不支持缩放 · "],
+["이 카메라는 조명 제어를 지원하지 않아요","This camera does not support light control","このカメラはライト制御に対応していません","此相机不支持补光控制"],["조명을 켜지 못했어요","Could not turn on the light","ライトを点灯できませんでした","无法开启补光"],
+["이 기기는 조명을 지원하지 않아요","This device does not support the light","この端末はライトに対応していません","此设备不支持补光"],["선택 열","Selected column","選択した列","所选列"],
+["카메라 시작 중...","Starting camera...","カメラを起動中...","正在启动相机..."],["화면 안에 바코드를 비추면 자동 입력돼요 (10~20cm, 연속 스캔)","Point at a barcode to enter it automatically (10-20 cm, continuous)","バーコードを画面に映すと自動入力されます（10〜20cm・連続スキャン）","将条码对准画面即可自动录入（10~20厘米，连续扫描）"],
+["화면 안에 바코드를 비추세요 (연속 스캔)","Aim at a barcode (continuous scan)","バーコードを画面に映してください（連続スキャン）","请将条码对准画面（连续扫描）"],
+["스캐너 라이브러리를 불러오지 못했어요 (인터넷 연결 확인)","Could not load the scanner library (check your connection)","スキャナーライブラリを読み込めませんでした（接続を確認）","无法加载扫描库（请检查网络）"],
+["이 환경은 카메라를 지원하지 않아요 (HTTPS 주소나 앱에서 열어 주세요)","This environment does not support the camera (open via HTTPS or the app)","この環境はカメラに対応していません（HTTPSアドレスまたはアプリで開いてください）","当前环境不支持相机（请通过 HTTPS 地址或应用打开）"],
+["카메라 권한이 거부됐어요. 폰 설정 → 앱 → 이 앱 → 권한 → 카메라를 허용해 주세요","Camera permission was denied. Go to Settings → Apps → this app → Permissions and allow Camera","カメラの権限が拒否されました。設定 → アプリ → このアプリ → 権限 でカメラを許可してください","相机权限被拒绝。请在 设置 → 应用 → 本应用 → 权限 中允许相机"],
+["사용할 카메라를 찾지 못했어요","No usable camera found","使用できるカメラが見つかりません","未找到可用的相机"],["다른 앱이 카메라를 쓰는 중이에요. 닫고 다시 시도해 주세요","Another app is using the camera. Close it and try again","別のアプリがカメラを使用中です。閉じてからやり直してください","其他应用正在使用相机，请关闭后重试"],
+["카메라를 시작하지 못했어요","Could not start the camera","カメラを起動できませんでした","无法启动相机"],["고속 스캐너를 못 켜서 일반 카메라로 전환해요","Fast scanner unavailable, switching to the standard camera","高速スキャナーを起動できないため通常カメラに切り替えます","无法启动高速扫描器，改用普通相机"],
+["사진 저장에 실패했어요","Failed to save the photo","写真の保存に失敗しました","保存照片失败"],["저장된 사진이 없어요","No saved photo","保存された写真がありません","没有已保存的照片"],["사진을 삭제했어요","Photo deleted","写真を削除しました","已删除照片"],
+["사진에서 바코드를 읽는 중...","Reading the barcode from the photo...","写真からバーコードを読み取り中...","正在从照片读取条码..."],["바코드를 못 읽었어요. 더 가까이서 또렷하게 다시 찍어 주세요","Could not read the barcode. Take the photo again, closer and sharper","バーコードを読み取れませんでした。もっと近くではっきり撮り直してください","无法读取条码，请靠近并拍摄更清晰的照片"],
+["사진 처리에 실패했어요","Photo processing failed","写真の処理に失敗しました","照片处理失败"],
+["항목 이름 (엑셀 1행 제목에 사용)","Item name (used as the Excel row 1 title)","項目名（Excel 1行目の見出しに使用）","项目名称（用作 Excel 第1行标题）"],["엑셀 정렬","Excel sort order","Excelの並び順","Excel 排序"],
+["오름차순","Ascending","昇順","升序"],["내림차순","Descending","降順","降序"],["입력 순서 그대로","As entered","入力順のまま","按输入顺序"],["중복 항목 제외","Exclude duplicates","重複項目を除外","排除重复项"],
+["스캔을 켤 때 조명 자동으로 켜기","Turn the light on automatically when scanning starts","スキャン開始時にライトを自動で点灯","开始扫描时自动开启补光"],["기본 줌 배율 (스캔을 켤 때)","Default zoom (when scanning starts)","デフォルトのズーム倍率（スキャン開始時）","默认缩放倍数（开始扫描时）"],
+["일반 카메라 해상도","Standard camera resolution","通常カメラの解像度","普通相机分辨率"],["표준 (빠름)","Standard (fast)","標準（高速）","标准（较快）"],["고해상도 (느림)","High (slower)","高解像度（低速）","高分辨率（较慢）"],
+["재스캔 간격 (같은 바코드)","Rescan interval (same barcode)","再スキャン間隔（同じバーコード）","重复扫描间隔（相同条码）"],["0.5초","0.5 s","0.5秒","0.5 秒"],["1초","1 s","1秒","1 秒"],["1.5초","1.5 s","1.5秒","1.5 秒"],
+["엑셀에 순번 열 추가","Add a number column to Excel","Excelに番号列を追加","在 Excel 中添加序号列"],["엑셀 파일 이름","Excel file name","Excelファイル名","Excel 文件名"],["스캔 소리","Scan sound","スキャン音","扫描提示音"],["스캔 진동","Scan vibration","スキャン振動","扫描震动"],
+["스캔 1회 후 카메라 자동 닫기","Close the camera after one scan","1回スキャンしたらカメラを自動で閉じる","扫描一次后自动关闭相机"],["스캔 사진 저장 (일반 카메라·사진 스캔)","Save scan photos (standard camera / photo scan)","スキャン写真を保存（通常カメラ・写真スキャン）","保存扫描照片（普通相机/拍照扫描）"],
+["인식 바코드 형식","Barcode formats","認識するバーコード形式","识别的条码类型"],["표준 (11종)","Standard (11 types)","標準（11種）","标准（11种）"],["전체 형식","All formats","すべての形式","全部类型"],["내 라벨 전용 (Code 93 + QR)","My labels only (Code 93 + QR)","自分のラベル専用（Code 93 + QR）","仅限我的标签（Code 93 + QR）"],
+["고속 스캐너(ML Kit)는 사진 저장을 지원하지 않아요. 사진이 필요하면 카메라 아이콘(사진 스캔)을 쓰세요.","The fast scanner (ML Kit) cannot save photos. Use the camera icon (photo scan) when you need photos.","高速スキャナー(ML Kit)は写真保存に対応していません。写真が必要な場合はカメラアイコン(写真スキャン)を使ってください。","高速扫描器（ML Kit）不支持保存照片。需要照片时请使用相机图标（拍照扫描）。"],
+["스캔 중 화면 꺼짐 방지","Keep the screen on while scanning","スキャン中は画面を消灯しない","扫描时保持屏幕常亮"],["세로 모드로 고정","Lock to portrait","縦向きに固定","锁定竖屏"],
+["순번","No.","番号","序号"],["별 목록"," List"," 一覧"," 列表"],["중복됨","Duplicate","重複","重复"],["추가됨","Added","追加済み","已添加"],
+["이 브라우저 미지원","browser not supported","このブラウザは非対応","浏览器不支持"],["HTTPS 아님","not HTTPS","HTTPSではありません","非 HTTPS"],["오류","error","エラー","错误"],["권한","permission","権限","权限"]
+].map(r=>[r[0],r.slice(1)]));
+const R=[
+[/^Barcode Scan · Developed by CWH \| 레드서비스$/,["Barcode Scan · Developed by CWH | RED service","Barcode Scan · Developed by CWH | RED service","Barcode Scan · Developed by CWH | RED service"]],
+[/^(\d+)개 열 · 총 (\d+)개 항목 · 자동 저장됨$/,["$1 columns · $2 items in total · autosaved","$1列 · 合計$2件 · 自動保存済み","$1列 · 共$2项 · 已自动保存"]],
+[/^(.+) 열 추가$/,["Add $1 column","$1列を追加","添加$1列"]],
+[/^이미 있는 항목: (.*)$/,["Already added: $1","登録済み: $1","已存在: $1"]],
+[/^(\d+)개 추가 · 중복 (\d+)개 제외$/,["$1 added · $2 duplicates skipped","$1件追加 · 重複$2件を除外","已添加$1项 · 跳过重复$2项"]],
+[/^(\d+)개 추가했어요$/,["$1 added","$1件追加しました","已添加$1项"]],
+[/^최대 (\d+)개 열까지 가능해요$/,["Up to $1 columns allowed","最大$1列までです","最多$1列"]],
+[/^취소: (.*)$/,["Undone: $1","取り消し: $1","已撤销: $1"]],
+[/^텍스트 공유도 실패\((.*)\) → "복사"를 이용해 주세요$/,["Text sharing failed too ($1). Please use Copy","テキスト共有も失敗しました($1)。コピーをご利用ください","文本分享也失败了($1)，请使用复制"]],
+[/^공유 실패: (.*)$/,["Share failed: $1","共有に失敗: $1","分享失败: $1"]],
+[/^공유 기능 없음\((.*)\) → 파일로 저장했어요$/,["Sharing unavailable ($1), saved as a file","共有機能なし($1)。ファイルで保存しました","无法分享($1)，已保存为文件"]],
+[/^엑셀 파일 공유가 막혔어요\((.*)\)$/,["Excel file sharing was blocked ($1)","Excelファイルの共有がブロックされました($1)","Excel 文件分享被阻止($1)"]],
+[/^공유가 막혔어요\((.*)\)$/,["Sharing was blocked ($1)","共有がブロックされました($1)","分享被阻止($1)"]],
+[/^줌 (.+)x · $/,["Zoom $1x · ","ズーム $1x · ","缩放 $1x · "]],
+[/^(.*) - 사진 스캔 \[자동 저장\]$/,["$1 - Photo scan [auto-save]","$1 - 写真スキャン[自動保存]","$1 - 拍照扫描[自动保存]"]],
+[/^(.*) - 바코드 스캔 \[일반 카메라\]$/,["$1 - Barcode scan [standard camera]","$1 - バーコードスキャン[通常カメラ]","$1 - 扫描条码[普通相机]"]],
+[/^(.*) - 스캔 \[고속 스캐너\]$/,["$1 - Scan [fast scanner]","$1 - スキャン[高速スキャナー]","$1 - 扫描[高速扫描器]"]],
+[/^(줌 .*? · |줌 적용 실패 · |이 카메라는 줌 미지원 · )?해독 시도 (\d+)회 \(숫자가 오르면 카메라는 정상 동작 중\)$/,["$1Decode attempts: $2 (the camera is working while this rises)","$1解析試行: $2回（数字が増えていればカメラは正常）","$1解码尝试: $2次（数字在增加说明相机正常）"]],
+[/^(.+)  \[세부: (.*)\]$/,["$1  [Details: $2]","$1  [詳細: $2]","$1  [详情: $2]"]],
+[/^(중복됨|추가됨): (.*) · 총 (\d+)개$/,["$1: $2 · Total $3","$1: $2 · 合計$3件","$1: $2 · 共$3项"]]
+];
+function tr(s){
+  if(LANG==='ko'||typeof s!=='string'||!/[가-힣]/.test(s))return s;
+  const i=LI[LANG],k=s.trim(),e=D.get(k);
+  if(e)return s.replace(k,e[i]);
+  for(const [re,t] of R){const m=s.match(re);if(m)return t[i].replace(/\$(\d)/g,(_,n)=>m[n]===undefined?'':tr(m[n]))}
+  return s;
+}
+function startI18n(){
+  document.documentElement.lang=LANG;
+  if(LANG==='ko')return;
+  const AT=['placeholder','title','aria-label'];
+  const walk=n=>{
+    if(n.nodeType===3){const v=n.nodeValue;if(/[가-힣]/.test(v)){const t=tr(v);if(t!==v)n.nodeValue=t}return}
+    if(n.nodeType!==1||n.tagName==='SCRIPT'||n.tagName==='STYLE')return;
+    for(const a of AT){const v=n.getAttribute(a);if(v&&/[가-힣]/.test(v)){const t=tr(v);if(t!==v)n.setAttribute(a,t)}}
+    n.childNodes.forEach(walk);
+  };
+  new MutationObserver(ms=>{for(const m of ms){if(m.type==='characterData')walk(m.target);else m.addedNodes.forEach(walk)}}).observe(document.body,{childList:true,subtree:true,characterData:true});
+  walk(document.body);
+}
+const termLabel=()=>{const t=(CFG.term||'').trim();return(!t||Object.values(T0).includes(t)||t==='항목')?T0[LANG]:t};
+const phTerm=()=>({ko:termName()+' 입력',en:'Enter '+termName(),ja:termName()+'を入力',zh:'输入'+termName()}[LANG]);
 let cols=load(), sets=new Map(), editing=null, undoSnap=null, tt, saveT, tact=null, ac, snd=true;
 try{snd=localStorage.getItem(SKEY)!=='0'}catch(e){}
 const $=s=>document.querySelector(s), app=$('#app');
@@ -179,7 +271,7 @@ function vibe(ok){
     else if(navigator.vibrate)navigator.vibrate(ok?35:[80,60,80]);
   }catch(e){}
 }
-const termName=()=>{const t=(CFG.term||'항목').trim()||'항목';return /(명|이름)$/.test(t)?t:t+'명'};
+const termName=()=>{const t=termLabel();return LANG!=='ko'?t:(/(명|이름)$/.test(t)?t:t+'명')};
 function cfgSave(){try{localStorage.setItem(CKEY,JSON.stringify(CFG))}catch(e){}}
 function toast(msg,undo,act){clearTimeout(tt);tact=act||null;$('#tmsg').textContent=msg;$('#tundo').textContent=act?act.label:'되돌리기';$('#tundo').hidden=!(undo||act);$('#toast').classList.add('on');tt=setTimeout(()=>$('#toast').classList.remove('on'),act?7000:undo?4500:2200)}
 function snap(){undoSnap=JSON.stringify(cols)}
@@ -201,7 +293,7 @@ function colHTML(c){const L=String.fromCharCode(65+cols.indexOf(c)+(CFG.seq?1:0)
   <section class="col" data-id="${c.id}">
     <div class="col-h">
       <span class="chip">${L}</span>
-      <input data-act="name" value="${esc(c.name)}" placeholder="${termName()} 입력" enterkeyhint="done">
+      <input data-act="name" value="${esc(c.name)}" placeholder="${phTerm()}" enterkeyhint="done">
       <button class="icb" data-act="scan" title="바코드 스캔" aria-label="바코드 스캔">${IC('scan')}</button>
       <button class="icb" data-act="photoscan" title="사진 스캔 (인식하면 자동 촬영·저장)" aria-label="사진 스캔">${IC('cam')}</button>
     </div>
@@ -211,7 +303,7 @@ function colHTML(c){const L=String.fromCharCode(65+cols.indexOf(c)+(CFG.seq?1:0)
   </section>`}
 const VER='v9';
 function updateSum(){const t=cols.reduce((a,c)=>a+c.items.length,0);$('#sum').textContent=`${cols.length}개 열 · 총 ${t}개 항목 · 자동 저장됨`}
-function renderAll(){app.innerHTML=cols.map(colHTML).join('')+`<button class="addcol" data-act="addcol">${IC('plus')}${esc(CFG.term)} 열 추가</button>`;updateSum()}
+function renderAll(){app.innerHTML=cols.map(colHTML).join('')+`<button class="addcol" data-act="addcol">${IC('plus')}${esc(termLabel())} 열 추가</button>`;updateSum()}
 function renderCol(id,focusAdd){
   const c=cols.find(x=>x.id===id),old=app.querySelector(`[data-id="${id}"]`);
   if(!c||!old)return renderAll();
@@ -280,7 +372,7 @@ function table(){
   const srt=a=>CFG.sort==='asc'?sortKo(a):CFG.sort==='desc'?sortKo(a).reverse():a;
   const sorted=cols.map(c=>srt(c.items));let n=0;for(const a of sorted)if(a.length>n)n=a.length;
   const rows=[];for(let r=0;r<n;r++)rows.push(sorted.map(a=>a[r]||''));
-  if(CFG.seq){heads.unshift('순번');rows.forEach((r,k)=>r.unshift(String(k+1)))}
+  if(CFG.seq){heads.unshift(tr('순번'));rows.forEach((r,k)=>r.unshift(String(k+1)))}
   return {heads,rows};
 }
 const tsv=()=>{const {heads,rows}=table();return [heads,...rows].map(r=>r.join('\t')).join('\n')};
@@ -314,7 +406,7 @@ function xlsx(){
   const cell=(v,r,i,st)=>v===''?`<c r="${L(i)}${r}" s="${st}"/>`:`<c r="${L(i)}${r}" t="inlineStr" s="${st}"><is><t>${X(v)}</t></is></c>`;
   const width=heads.map((h,i)=>{let m=h.length*1.6;for(const r of rows){const l=String(r[i]).length;if(l>m)m=l}return Math.min(50,Math.max(14,m+4))});
   const body=rows.map((r,k)=>`<row r="${k+2}">${r.map((v,i)=>cell(v,k+2,i,k%2?3:2)).join('')}</row>`).join('');
-  const nm=((CFG.term||'항목').replace(/[\[\]:*?\/\\]/g,'').slice(0,20)||'항목')+'별 목록';
+  const nm=((termLabel()).replace(/[\[\]:*?\/\\]/g,'').slice(0,20)||'Items')+tr('별 목록');
   const sheet=H+`<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0" showGridLines="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>${width.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('')}</cols><sheetData><row r="1" ht="28" customHeight="1">${heads.map((h,i)=>cell(h,1,i,1)).join('')}</row>${body}</sheetData></worksheet>`;
   const bd=(st,c)=>['left','right','top','bottom'].map(k=>`<${k} style="${st}"><color rgb="${c}"/></${k}>`).join('')+'<diagonal/>';
   const al='<alignment horizontal="center" vertical="center"/>';
@@ -423,8 +515,7 @@ function openWebScan(colId){
   document.getElementById('scanSheet').classList.add('on');
   document.getElementById('scanStatus').textContent = '카메라 시작 중...';
   loadScanner().then(camCheck).then(()=>{
-    const F=window.Html5QrcodeSupportedFormats||{};
-    const formats=['QR_CODE','CODE_93','CODE_128','CODE_39','EAN_13','EAN_8','UPC_A','UPC_E','ITF','CODABAR','DATA_MATRIX'].map(k=>F[k]).filter(x=>x!==undefined);
+    const formats=FMTS();
     html5Qr = new Html5Qrcode('reader',{
       formatsToSupport:formats,                              // 흔한 형식만 → 인식 빠르고 정확
       experimentalFeatures:{useBarCodeDetectorIfSupported:true}, // 기기 내장 인식기가 있으면 우선 사용
@@ -442,6 +533,7 @@ function openWebScan(colId){
     );
   }).then(()=>{
     try{html5Qr.applyVideoConstraints({advanced:[{focusMode:'continuous'}]}).catch(()=>{})}catch(e){}
+    awake(true);
     setTimeout(()=>applyZoomWeb(+CFG.zoom||1),300);
     if(CFG.torch)setTimeout(toggleTorchWeb,800);
     document.getElementById('scanStatus').textContent = '화면 안에 바코드를 비추면 자동 입력돼요 (10~20cm, 연속 스캔)';
@@ -474,6 +566,7 @@ function loadScanner(){
 }
 function closeScan(){
   if(nativeOn){closeNative();return}
+  awake(false);
   document.getElementById('scanSheet').classList.remove('on');
   if(html5Qr){
     html5Qr.stop().then(()=>{ html5Qr.clear(); html5Qr=null; }).catch(()=>{ html5Qr=null; });
@@ -521,12 +614,14 @@ async function openNative(colId,B){
   nativeHandle=await B.addListener('barcodesScanned',ev=>{
     for(const b of (ev.barcodes||[])){const v=String(b.rawValue||b.displayValue||'').trim();if(v)onScanSuccess(v)}
   });
-  await B.startScan();
+  await B.startScan(CFG.fmt==='all'?undefined:{formats:fmtKeys()});
+  awake(true);
   setTimeout(async()=>{try{await B.setZoomRatio({zoomRatio:+CFG.zoom||1})}catch(e){}if(CFG.torch){try{await B.enableTorch()}catch(e){}}},400);
 }
 async function closeNative(){
   const B=NS();
   nativeOn=false;
+  awake(false);
   document.body.classList.remove('barcode-scanner-active');
   document.documentElement.classList.remove('scan');
   try{if(nativeHandle)await nativeHandle.remove()}catch(e){}
@@ -549,7 +644,10 @@ const DB={open(){return this.p||(this.p=new Promise((res,rej)=>{const r=indexedD
   async run(mode,fn){const d=await this.open();return new Promise((res,rej)=>{const t=d.transaction('ph',mode),rq=fn(t.objectStore('ph'));t.oncomplete=()=>res(rq&&rq.result);t.onerror=()=>rej(t.error)})},
   set(k,v){return this.run('readwrite',o=>o.put(v,k))},get(k){return this.run('readonly',o=>o.get(k))},del(k){return this.run('readwrite',o=>o.delete(k))},keys(){return this.run('readonly',o=>o.getAllKeys())}};
 function loadPhotos(){DB.keys().then(ks=>{(ks||[]).forEach(k=>photos.add(k));if(photos.size)renderAll()}).catch(()=>{})}
-const FMTS=()=>{const F=window.Html5QrcodeSupportedFormats||{};return ['QR_CODE','CODE_93','CODE_128','CODE_39','EAN_13','EAN_8','UPC_A','UPC_E','ITF','CODABAR','DATA_MATRIX'].map(k=>F[k]).filter(x=>x!==undefined)};
+const FMT_STD=['QR_CODE','CODE_93','CODE_128','CODE_39','EAN_13','EAN_8','UPC_A','UPC_E','ITF','CODABAR','DATA_MATRIX'];
+const FMT_ALL=FMT_STD.concat(['AZTEC','PDF_417','RSS_14','RSS_EXPANDED']);
+const fmtKeys=()=>CFG.fmt==='mine'?['CODE_93','QR_CODE']:CFG.fmt==='all'?FMT_ALL:FMT_STD;
+const FMTS=()=>{const F=window.Html5QrcodeSupportedFormats||{};return fmtKeys().map(k=>F[k]).filter(x=>x!==undefined)};
 function markPhoto(cid,text){
   photos.add(cid+'|'+text);
   const sec=app.querySelector(`[data-id="${cid}"]`);if(!sec)return;let n=0;
@@ -599,12 +697,35 @@ $('#phShare').onclick=async()=>{const b=await DB.get(phKey);if(b)sendFile(b,phKe
 $('#phDel').onclick=async()=>{await DB.del(phKey);photos.delete(phKey);$('#phSheet').classList.remove('on');renderCol(phKey.split('|')[0]);toast('사진을 삭제했어요')};
 $('#phClose').onclick=()=>$('#phSheet').classList.remove('on');
 
+/* ---------- 화면 꺼짐 방지 · 세로 고정 ---------- */
+let wl=null;
+async function awake(on){
+  if(on&&!CFG.awake)return;
+  try{
+    const K=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.KeepAwake;
+    if(K){if(on)await K.keepAwake();else await K.allowSleep();return}
+    if(on){if(navigator.wakeLock&&!wl){wl=await navigator.wakeLock.request('screen');wl.addEventListener('release',()=>{wl=null})}}
+    else if(wl){await wl.release();wl=null}
+  }catch(e){}
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(nativeOn||document.getElementById('scanSheet').classList.contains('on')))awake(true)});
+async function applyOrientation(){
+  try{
+    const SO=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.ScreenOrientation;
+    if(SO){if(CFG.portrait)await SO.lock({orientation:'portrait'});else await SO.unlock()}
+    else if(screen.orientation&&screen.orientation.lock){if(CFG.portrait)await screen.orientation.lock('portrait');else screen.orientation.unlock()}
+  }catch(e){}
+}
 /* ---------- 설정 ---------- */
 const OPTS=[
-  ['text','term','항목 이름 (엑셀 1행 제목에 사용)',['기관','제품','품목','창고','고객','분류','부품']],
+  ['sel','lang','언어 · Language · 言語 · 语言',[['ko','한국어'],['en','English'],['ja','日本語'],['zh','中文']]],
+  ['text','term','항목 이름 (엑셀 1행 제목에 사용)',TERMS[LANG]],
+  ['sel','fmt','인식 바코드 형식',[['std','표준 (11종)'],['all','전체 형식'],['mine','내 라벨 전용 (Code 93 + QR)']]],
   ['sel','sort','엑셀 정렬',[['asc','오름차순'],['desc','내림차순'],['none','입력 순서 그대로']]],
   ['chk','dedupe','중복 항목 제외'],
   ['chk','torch','스캔을 켤 때 조명 자동으로 켜기'],
+  ['chk','awake','스캔 중 화면 꺼짐 방지'],
+  ['chk','portrait','세로 모드로 고정'],
   ['sel','zoom','기본 줌 배율 (스캔을 켤 때)',[['1','1x'],['2','2x'],['3','3x']]],
   ['sel','res','일반 카메라 해상도',[['1280','표준 (빠름)'],['1920','고해상도 (느림)']]],
   ['sel','gap','재스캔 간격 (같은 바코드)',[['500','0.5초'],['1000','1초'],['1500','1.5초']]],
@@ -617,18 +738,20 @@ const OPTS=[
 function openSet(){
   $('#setBody').innerHTML=OPTS.map(([t,k,l,x])=>t==='chk'?`<label class="opt"><span>${l}</span><input type="checkbox" data-k="${k}"${CFG[k]?' checked':''}></label>`
     :t==='sel'?`<label class="opt"><span>${l}</span><select data-k="${k}">${x.map(([v,n])=>`<option value="${v}"${CFG[k]===v?' selected':''}>${n}</option>`).join('')}</select></label>`
-    :`<label class="opt tx"><span>${l}</span><input type="text" data-k="${k}" value="${esc(CFG[k]||'')}"${x?` list="dl_${k}"`:''} autocomplete="off"></label>${x?`<datalist id="dl_${k}">${x.map(v=>`<option value="${v}">`).join('')}</datalist>`:''}`).join('')
+    :`<label class="opt tx"><span>${l}</span><input type="text" data-k="${k}" value="${esc(k==='term'?termLabel():(CFG[k]||''))}"${x?` list="dl_${k}"`:''} autocomplete="off"></label>${x?`<datalist id="dl_${k}">${x.map(v=>`<option value="${v}">`).join('')}</datalist>`:''}`).join('')
     +`<p class="hint">고속 스캐너(ML Kit)는 사진 저장을 지원하지 않아요. 사진이 필요하면 카메라 아이콘(사진 스캔)을 쓰세요.<br>Barcode Scan · Developed by CWH | 레드서비스</p>`;
   $('#setSheet').classList.add('on');
 }
 $('#setBody').addEventListener('input',e=>{
   const k=e.target.dataset.k;if(!k)return;
   CFG[k]=e.target.type==='checkbox'?e.target.checked:e.target.value;cfgSave();
-  if(k==='term')renderAll();if(k==='dedupe')sets.clear();if(k==='snd'&&CFG.snd)beep(true);if(k==='vib'&&CFG.vib)vibe(true);
+  if(k==='lang'){setTimeout(()=>location.reload(),200);return}if(k==='term')renderAll();if(k==='dedupe')sets.clear();if(k==='snd'&&CFG.snd)beep(true);if(k==='vib'&&CFG.vib)vibe(true);if(k==='portrait')applyOrientation();if(k==='awake'&&!CFG.awake)awake(false);
 });
 $('#bSet').onclick=openSet;$('#bSetClose').onclick=()=>$('#setSheet').classList.remove('on');
 $('#setSheet').onclick=e=>{if(e.target.id==='setSheet')e.target.classList.remove('on')};
 $('#phSheet').onclick=e=>{if(e.target.id==='phSheet')e.target.classList.remove('on')};
+startI18n();
+applyOrientation();
 renderAll();loadPhotos();
 </script>
 </body>
